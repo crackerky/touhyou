@@ -6,38 +6,45 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 export default defineConfig({
   plugins: [
     react(),
-    wasm(),              // .wasm ESM integration
+    wasm(),
+    // Node polyfills - specify as a plugin with proper options
     {
-      ...nodePolyfills(),
-      enforce: 'post'
+      ...nodePolyfills({
+        // Explicitly include all required polyfills
+        include: [
+          'buffer', 
+          'process', 
+          'stream', 
+          'events', 
+          'util', 
+          'path'
+        ]
+      }),
+      enforce: 'pre' // Execute before other plugins
     }
   ],
   server: {
-    hmr: { overlay: false }   // disable red overlay in dev
+    hmr: { overlay: false }
   },
   optimizeDeps: {
-    exclude: ['lucide-react'],
+    exclude: ['lucide-react', 'stream'],
   },
   define: {
     global: 'globalThis',
-    // Add other Node.js global objects that might be used
     'process.env': process.env
-  },
-  build: {
-    sourcemap: true,     // Add source maps for better debugging
-    rollupOptions: {
-      plugins: [nodePolyfills()]
-    }
   },
   resolve: {
     alias: {
-      // Polyfill Node.js core modules in the browser
-      util: 'rollup-plugin-node-polyfills/polyfills/util',
-      sys: 'util',
+      // Use explicit paths for polyfills
       stream: 'rollup-plugin-node-polyfills/polyfills/stream',
+      events: 'rollup-plugin-node-polyfills/polyfills/events',
+      util: 'rollup-plugin-node-polyfills/polyfills/util',
       path: 'rollup-plugin-node-polyfills/polyfills/path',
       buffer: 'rollup-plugin-node-polyfills/polyfills/buffer-es6',
       process: 'rollup-plugin-node-polyfills/polyfills/process-es6'
     }
+  },
+  build: {
+    sourcemap: true
   }
 });
