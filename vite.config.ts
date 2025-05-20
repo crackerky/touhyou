@@ -3,11 +3,13 @@ import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import topLevelAwait from 'vite-plugin-top-level-await';
+import wasmPack from 'vite-plugin-wasm-pack';
 
 export default defineConfig({
   plugins: [
     react(),
     wasm(),
+    wasmPack(['./node_modules/@emurgo/cardano-serialization-lib-browser']),
     topLevelAwait({
       // The export name of top-level await promise for each chunk module
       promiseExportName: "__tla",
@@ -51,7 +53,8 @@ export default defineConfig({
     esbuildOptions: {
       target: 'esnext',
       supported: {
-        bigint: true
+        bigint: true,
+        'top-level-await': true
       }
     }
   },
@@ -60,6 +63,13 @@ export default defineConfig({
     target: 'esnext',
     commonjsOptions: {
       include: [/node_modules/]
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'cardano-lib': ['@emurgo/cardano-serialization-lib-browser']
+        }
+      }
     }
   }
 });
