@@ -27,21 +27,22 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      // Ensure proper resolution of Mesh SDK dependencies
+      // Avoid alias that might cause circular references
       '@emurgo/cardano-serialization-lib-browser': '@emurgo/cardano-serialization-lib-browser'
     }
   },
   define: { 
-    global: 'globalThis',
+    global: 'window',
     'process.env': process.env
   },
   server: {
     hmr: { overlay: false }
   },
   optimizeDeps: {
-    exclude: ['lucide-react', '@emurgo/cardano-serialization-lib-browser'],
+    exclude: ['lucide-react'],
+    include: ['@supabase/supabase-js'],
     esbuildOptions: {
-      target: 'esnext',
+      target: 'es2020',
       supported: {
         bigint: true
       }
@@ -49,6 +50,9 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    target: 'esnext'
+    target: 'es2020',
+    commonjsOptions: {
+      include: [/node_modules/]
+    }
   }
 });

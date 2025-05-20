@@ -15,15 +15,24 @@ export default function WalletConnection() {
   const wallets = useWalletList();
   const { connect, connected, wallet: meshWallet, disconnect } = useWallet();
 
-  // Silent reconnect - with error handling
+  // Debug information
+  console.log('Available wallets:', wallets);
+  console.log('Connected status:', connected);
+  console.log('Wallet address:', meshWallet?.address);
+
+  // Silent reconnect
   useEffect(() => {
     const tryConnect = async () => {
       try {
         const saved = localStorage.getItem('wallet');
+        console.log('Attempting to reconnect wallet:', saved);
         if (!connected && saved && window.cardano?.[saved]) {
+          console.log('Calling enable on wallet');
           const api = await window.cardano[saved]
             .enable({ extensions:[{cip:95},{cip:104}] });
+          console.log('Wallet API enabled, connecting');
           await connect(saved, api);
+          console.log('Wallet connected successfully');
         }
       } catch (err) {
         console.error('Auto-reconnect failed:', err);
@@ -40,6 +49,7 @@ export default function WalletConnection() {
     const verifyAddress = async () => {
       try {
         if (connected && meshWallet && meshWallet.address && !wallet) {
+          console.log('Verifying wallet address:', meshWallet.address);
           await verifyWallet(meshWallet.address);
         }
       } catch (err) {
@@ -55,11 +65,15 @@ export default function WalletConnection() {
   const handleConnect = async () => {
     try {
       setConnectionError(null);
+      console.log('Attempting to connect wallet, available wallets:', wallets);
       if (wallets.length > 0) {
         const name = wallets[0].name; // auto-pick if only one
+        console.log('Connecting to wallet:', name);
         await connect(name);
         localStorage.setItem('wallet', name);
+        console.log('Wallet connected successfully');
       } else {
+        console.error('No wallets available');
         setConnectionError('利用可能なウォレットが見つかりませんでした');
       }
     } catch (err) {
