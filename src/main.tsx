@@ -7,6 +7,14 @@ import { MeshProvider } from '@meshsdk/react';
 import ErrorBoundary from './ErrorBoundary';
 import App from './App.tsx';
 import './index.css';
+import { initCardanoLib } from './lib/wallet';
+
+// Init WebAssembly libraries asynchronously (non-blocking)
+initCardanoLib().then(success => {
+  console.log('Cardano library initialization:', success ? 'successful' : 'failed');
+}).catch(err => {
+  console.warn('Cardano library initialization error (non-critical):', err);
+});
 
 // Debug information for troubleshooting
 console.log('Application starting...');

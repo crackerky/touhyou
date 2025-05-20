@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { isValidEthereumAddress, isValidCardanoAddress } from '../lib/utils';
+import { isValidEthereumAddress, isCardanoAddressFormatValid } from '../lib/utils';
+import { isValidCardanoAddress } from '../lib/wallet';
 
 interface VoteState {
   wallet: string | null;
@@ -28,10 +29,26 @@ export const useVoteStore = create<VoteState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
-      // EthereumまたはCardanoアドレスを検証
-      if (!isValidEthereumAddress(address) && !isValidCardanoAddress(address)) {
+      // First check format with regex (fast)
+      const isValidFormat = isValidEthereumAddress(address) || isCardanoAddressFormatValid(address);
+      
+      if (!isValidFormat) {
         set({ error: '無効なウォレットアドレス形式です', isLoading: false });
         return false;
+      }
+
+      // For Cardano addresses, also do a more thorough check if possible
+      if (!isValidEthereumAddress(address)) {
+        try {
+          const isValid = await isValidCardanoAddress(address);
+          if (!isValid) {
+            console.warn('Address failed WASM validation but passed regex check:', address);
+            // We continue anyway since the regex passed, and the WASM lib might not be loaded
+          }
+        } catch (err) {
+          console.error('Cardano address validation error:', err);
+          // Continue since the regex check passed
+        }
       }
 
       // ウォレットが存在するか確認

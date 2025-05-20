@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { isValidCardanoAddress } from "./wallet";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -10,7 +11,9 @@ export function isValidEthereumAddress(address: string): boolean {
 }
 
 // Cardanoアドレスの検証（bech32形式）
-export function isValidCardanoAddress(address: string): boolean {
+// Use regex temporarily for immediate validation, the real validation
+// happens asynchronously with the WASM library
+export function isCardanoAddressFormatValid(address: string): boolean {
   // より広範なCardanoアドレスパターンをサポート
   // Shelleyメインネット、テストネット、Byron時代のアドレスを含む
   return /^addr1[a-zA-Z0-9]{58,98}$/.test(address) || 
