@@ -12,11 +12,13 @@ import { initCardanoLib } from './lib/wallet';
 // Create a function to initialize the app
 const initApp = () => {
   // Init WebAssembly libraries asynchronously (non-blocking)
-  initCardanoLib().then(success => {
-    console.log('Cardano library initialization:', success ? 'successful' : 'failed');
-  }).catch(err => {
-    console.warn('Cardano library initialization error (non-critical):', err);
-  });
+  setTimeout(() => {
+    initCardanoLib().then(success => {
+      console.log('Cardano library initialization:', success ? 'successful' : 'failed');
+    }).catch(err => {
+      console.warn('Cardano library initialization error (non-critical):', err);
+    });
+  }, 100); // Slight delay to ensure other critical resources load first
 
   // Debug information for troubleshooting
   console.log('Application starting...');

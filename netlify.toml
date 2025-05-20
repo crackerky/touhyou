@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18.19.0"
+  NODE_OPTIONS = "--max_old_space_size=8192"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Force dependencies to install in one step for caching
+[build.processing]
+  skip_processing = false
+
+# Production context: all deploys from the Production branch
+[context.production.environment]
+  NODE_ENV = "production"

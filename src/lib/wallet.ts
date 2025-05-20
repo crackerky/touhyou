@@ -36,7 +36,16 @@ export const initCardanoLib = async (): Promise<boolean> => {
   try {
     // Dynamic import to avoid loading issues during initial render
     // Wrapped in a function to prevent top-level await issues during build
-    const loadCardanoLib = () => import('@emurgo/cardano-serialization-lib-browser');
+    const loadCardanoLib = async () => {
+      // Use a more defensive approach to loading the WASM library
+      try {
+        return await import('@emurgo/cardano-serialization-lib-browser');
+      } catch (e) {
+        console.warn('Failed to load Cardano library directly:', e);
+        return null;
+      }
+    };
+    
     const lib = await loadCardanoLib();
     
     if (lib) {
@@ -54,10 +63,15 @@ export const initCardanoLib = async (): Promise<boolean> => {
 
 // Validate a Cardano address
 export const isValidCardanoAddress = async (address: string): Promise<boolean> => {
-  // If we already have the lib or can load it, use it
+  // Always use the regex-based validation first as a fast path
+  if (!mockCardanoApi.isValidAddress(address)) {
+    return false;
+  }
+  
+  // If we already have the lib or can load it, use it for detailed validation
   if (cardanoLibAvailable || await initCardanoLib()) {
     try {
-      // Use the actual library for validation
+      // Use the actual library for validation if available
       return cardanoLib.Address.from_bech32(address) !== null;
     } catch (error) {
       // If the address isn't valid bech32, try legacy validation
@@ -65,14 +79,14 @@ export const isValidCardanoAddress = async (address: string): Promise<boolean> =
         return cardanoLib.ByronAddress.from_base58(address) !== null;
       } catch (innerError) {
         console.warn('Address validation error:', innerError);
-        // Fall back to regex validation
-        return mockCardanoApi.isValidAddress(address);
+        // We already passed the regex check, so return true
+        return true;
       }
     }
   }
   
-  // Fall back to mock implementation if the library isn't available
-  return mockCardanoApi.isValidAddress(address);
+  // We already passed the regex check at the beginning
+  return true;
 };
 
 // Check if Cardano wallet is available in the browser

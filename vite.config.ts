@@ -47,37 +47,46 @@ export default defineConfig({
     }
   },
   build: {
-    sourcemap: true,
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false, // Disable sourcemaps to reduce memory usage
+    minify: 'esbuild', // Use esbuild for minification (faster and less memory intensive)
     target: 'es2022',
+    reportCompressedSize: false, // Disable gzip size reporting to save memory
+    chunkSizeWarningLimit: 2000, // Increase chunk size warning limit
     commonjsOptions: {
       include: [/node_modules/],
       transformMixedEsModules: true
     },
     rollupOptions: {
+      // Reduce memory use by external dependencies
+      external: [
+        // External dependencies that are causing issues
+      ],
+      // Reduce memory usage by limiting chunk size and manual chunking
       output: {
-        // Wrap the WebAssembly import in a function to avoid top-level await
-        format: 'es',
-        inlineDynamicImports: true,
-        // Reduce memory usage by limiting chunk size
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            // Create a separate chunk for each major library/framework
-            if (id.includes('@meshsdk')) {
-              return 'vendor-meshsdk';
-            }
-            if (id.includes('@emurgo')) {
-              return 'vendor-emurgo';
-            }
-            if (id.includes('react')) {
-              return 'vendor-react';
-            }
-            if (id.includes('framer-motion')) {
-              return 'vendor-framer';
-            }
-            // Group remaining dependencies
-            return 'vendor';
-          }
-        }
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-framer': ['framer-motion'],
+          'vendor-mesh': [
+            '@meshsdk/core',
+            '@meshsdk/react'
+          ],
+          'vendor-cardano': [
+            '@emurgo/cardano-serialization-lib-browser'
+          ],
+          'vendor-ui': [
+            'lucide-react',
+            'react-hot-toast',
+            'class-variance-authority',
+            'clsx',
+            'tailwind-merge'
+          ]
+        },
+        // Avoid too large chunks by limiting size
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
     }
   }
