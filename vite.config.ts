@@ -9,9 +9,10 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 class PluginsConfig {
   getPlugins() {
     return [
+      // Node polyfills must come first
+      this.getNodePolyfillsPlugin(),
       react(),
-      wasm(),
-      this.getNodePolyfillsPlugin()
+      wasm()
     ];
   }
   
@@ -27,7 +28,8 @@ class PluginsConfig {
           'path'
         ]
       }),
-      enforce: 'pre' // Execute before other plugins
+      enforce: 'pre', // Execute before other plugins
+      apply: 'build' // Apply during build
     };
   }
 }
@@ -72,7 +74,10 @@ class DefineConfig {
 class BuildConfig {
   getConfig() {
     return {
-      sourcemap: true
+      sourcemap: true,
+      commonjsOptions: {
+        transformMixedEsModules: true
+      }
     };
   }
 }
@@ -101,7 +106,13 @@ class ViteConfigManager {
       server: this.serverConfig.getConfig(),
       optimizeDeps: this.optimizeDepsConfig.getConfig(),
       define: this.defineConfig.getConfig(),
-      build: this.buildConfig.getConfig()
+      build: this.buildConfig.getConfig(),
+      resolve: {
+        alias: {
+          // Add explicit aliases for problematic modules
+          global: require.resolve('rollup-plugin-node-polyfills/polyfills/global')
+        }
+      }
     });
   }
 }
