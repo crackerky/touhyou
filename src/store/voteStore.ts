@@ -35,11 +35,16 @@ export const useVoteStore = create<VoteState>((set, get) => ({
       }
 
       // ウォレットが存在するか確認
-      const { data: existingWallet } = await supabase
+      const { data: existingWallet, error: fetchError } = await supabase
         .from('wallets')
         .select('*')
         .eq('address', address)
         .single();
+
+      if (fetchError && fetchError.message !== 'No rows found') {
+        set({ error: `データの取得に失敗しました: ${fetchError.message}`, isLoading: false });
+        return false;
+      }
 
       if (existingWallet) {
         set({ 
@@ -57,7 +62,7 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .insert([{ address, has_voted: false }]);
 
       if (insertError) {
-        set({ error: insertError.message, isLoading: false });
+        set({ error: `ウォレット登録に失敗しました: ${insertError.message}`, isLoading: false });
         return false;
       }
 
@@ -69,7 +74,8 @@ export const useVoteStore = create<VoteState>((set, get) => ({
       });
       return true;
     } catch (error) {
-      set({ error: 'ウォレットの検証に失敗しました', isLoading: false });
+      const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+      set({ error: `ウォレットの検証に失敗しました: ${errorMessage}`, isLoading: false });
       return false;
     }
   },
@@ -91,7 +97,7 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .insert([{ wallet_address: wallet, option }]);
 
       if (voteError) {
-        set({ error: voteError.message, isLoading: false });
+        set({ error: `投票登録に失敗しました: ${voteError.message}`, isLoading: false });
         return false;
       }
 
@@ -102,7 +108,7 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .eq('address', wallet);
 
       if (updateError) {
-        set({ error: updateError.message, isLoading: false });
+        set({ error: `ウォレット状態の更新に失敗しました: ${updateError.message}`, isLoading: false });
         return false;
       }
 
@@ -114,7 +120,8 @@ export const useVoteStore = create<VoteState>((set, get) => ({
       
       return true;
     } catch (error) {
-      set({ error: '投票に失敗しました', isLoading: false });
+      const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+      set({ error: `投票に失敗しました: ${errorMessage}`, isLoading: false });
       return false;
     }
   },
@@ -128,13 +135,13 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .select('option');
 
       if (error) {
-        set({ error: error.message, isLoading: false });
+        set({ error: `投票データの取得に失敗しました: ${error.message}`, isLoading: false });
         return;
       }
 
       const voteCounts: Record<string, number> = { 'option1': 0, 'option2': 0, 'option3': 0 };
       
-      data.forEach(vote => {
+      data?.forEach(vote => {
         if (voteCounts[vote.option] !== undefined) {
           voteCounts[vote.option]++;
         }
@@ -142,7 +149,8 @@ export const useVoteStore = create<VoteState>((set, get) => ({
 
       set({ votes: voteCounts, isLoading: false });
     } catch (error) {
-      set({ error: '投票数の取得に失敗しました', isLoading: false });
+      const errorMessage = error instanceof Error ? error.message : '不明なエラー';
+      set({ error: `投票数の取得に失敗しました: ${errorMessage}`, isLoading: false });
     }
   },
 
