@@ -57,7 +57,27 @@ export default defineConfig({
       output: {
         // Wrap the WebAssembly import in a function to avoid top-level await
         format: 'es',
-        inlineDynamicImports: true
+        inlineDynamicImports: true,
+        // Reduce memory usage by limiting chunk size
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            // Create a separate chunk for each major library/framework
+            if (id.includes('@meshsdk')) {
+              return 'vendor-meshsdk';
+            }
+            if (id.includes('@emurgo')) {
+              return 'vendor-emurgo';
+            }
+            if (id.includes('react')) {
+              return 'vendor-react';
+            }
+            if (id.includes('framer-motion')) {
+              return 'vendor-framer';
+            }
+            // Group remaining dependencies
+            return 'vendor';
+          }
+        }
       }
     }
   }
