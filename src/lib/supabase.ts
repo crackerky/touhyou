@@ -7,8 +7,27 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIU
 
 console.log('Initializing Supabase with URL:', supabaseUrl);
 
+// Validate environment variables
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase configuration. Please check .env file');
+}
+
 // Create a single supabase client for interacting with your database
 export const supabase = createClient<Database>(
   supabaseUrl,
   supabaseAnonKey
 );
+
+// Test connection
+(async () => {
+  try {
+    const { data, error } = await supabase.from('wallets').select('count');
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection successful. Tables available.');
+    }
+  } catch (err) {
+    console.error('Supabase connection test error:', err);
+  }
+})();

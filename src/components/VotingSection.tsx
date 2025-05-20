@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { VoteIcon, CheckCircle } from 'lucide-react';
+import { VoteIcon, CheckCircle, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { Button } from './ui/Button';
 import { useVoteStore } from '../store/voteStore';
@@ -8,6 +8,16 @@ import { truncateAddress } from '../lib/utils';
 
 export default function VotingSection() {
   const { wallet, hasVoted, isLoading, castVote, error } = useVoteStore();
+
+  // Add debug logging
+  useEffect(() => {
+    console.log('VotingSection rendered', {
+      wallet,
+      hasVoted,
+      isLoading,
+      error
+    });
+  }, [wallet, hasVoted, isLoading, error]);
 
   const options = [
     { id: 'option1', name: '選択肢 1', description: '1つ目の投票選択肢' },
@@ -30,6 +40,30 @@ export default function VotingSection() {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
   };
+
+  // Check for wallet before rendering voting UI
+  if (!wallet) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md"
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-center">
+              <AlertCircle className="h-12 w-12 text-amber-500 mb-2" />
+            </div>
+            <CardTitle className="text-center">ウォレット未接続</CardTitle>
+            <CardDescription className="text-center">
+              投票するにはウォレットを接続してください。
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </motion.div>
+    );
+  }
 
   if (hasVoted) {
     return (
@@ -61,6 +95,16 @@ export default function VotingSection() {
     );
   }
 
+  const handleVote = async (optionId: string) => {
+    console.log('Casting vote for option:', optionId);
+    try {
+      const success = await castVote(optionId);
+      console.log('Vote result:', success);
+    } catch (err) {
+      console.error('Vote casting error:', err);
+    }
+  };
+
   return (
     <motion.div
       initial="hidden"
@@ -86,7 +130,8 @@ export default function VotingSection() {
         <CardContent className="space-y-4">
           {error && (
             <div className="bg-red-50 text-red-500 p-2 rounded text-sm">
-              {error}
+              <p className="font-medium">エラー:</p>
+              <p>{error}</p>
             </div>
           )}
           
@@ -96,7 +141,7 @@ export default function VotingSection() {
                 variant="outline"
                 size="lg"
                 className="w-full justify-start h-auto py-4 hover:border-blue-500 hover:bg-blue-50 transition-all"
-                onClick={() => castVote(option.id)}
+                onClick={() => handleVote(option.id)}
                 disabled={isLoading}
               >
                 <div className="text-left">
