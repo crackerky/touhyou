@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ウォレット認証投票システム</title>
+    <meta name="description" content="ブロックチェーンウォレットを使用した安全な投票システムデモ" />
+    <script type="module">
+      // Early initialization to avoid top-level await issues during build
+      window.wasmImportsInitialized = false;
+      window.initWasmImports = function() {
+        if (window.wasmImportsInitialized) return;
+        window.wasmImportsInitialized = true;
+      };
+      window.initWasmImports();
+    </script>
   </head>
   <body>
     <div id="root"></div>
