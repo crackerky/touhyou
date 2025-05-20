@@ -1,5 +1,6 @@
 // Set up global object before any other polyfills
 window.global = window;
+globalThis.global = globalThis;
 
 // This file sets up polyfills needed for Node.js compatibility in the browser
 import { Buffer } from 'buffer';

@@ -9,9 +9,10 @@ import nodePolyfills from 'rollup-plugin-node-polyfills';
 class PluginsConfig {
   getPlugins() {
     return [
+      // It's critical that node polyfills come first
+      this.getNodePolyfillsPlugin(),
       react(),
-      wasm(),
-      this.getNodePolyfillsPlugin()
+      wasm()
     ];
   }
   
@@ -61,7 +62,7 @@ class DefineConfig {
   getConfig() {
     return {
       // Define global before it's used in any module
-      global: 'window',
+      global: 'globalThis', // Changed from 'window' to 'globalThis'
       'process.env': process.env
     };
   }
