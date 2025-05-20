@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
-import topLevelAwait from 'vite-plugin-top-level-await';
 import wasmPack from 'vite-plugin-wasm-pack';
 
 export default defineConfig({
@@ -10,12 +9,6 @@ export default defineConfig({
     react(),
     wasm(),
     wasmPack(['./node_modules/@emurgo/cardano-serialization-lib-browser']),
-    topLevelAwait({
-      // The export name of top-level await promise for each chunk module
-      promiseExportName: "__tla",
-      // The function to generate import names of top-level await promise in each chunk module
-      promiseImportName: i => `__tla_${i}`
-    }),
     nodePolyfills({
       // Explicitly specify which polyfills to include
       include: [
