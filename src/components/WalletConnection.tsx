@@ -15,22 +15,40 @@ export default function WalletConnection() {
   const wallets = useWalletList();
   const { connect, connected, wallet: meshWallet, disconnect } = useWallet();
 
-  // Silent reconnect
+  // Silent reconnect - with error handling
   useEffect(() => {
-    const saved = localStorage.getItem('wallet');
-    if (!connected && saved && window.cardano?.[saved]) {
-      window.cardano[saved]
-        .enable({ extensions:[{cip:95},{cip:104}] })
-        .then(api => connect(saved, api))
-        .catch(() => localStorage.removeItem('wallet'));
-    }
+    const tryConnect = async () => {
+      try {
+        const saved = localStorage.getItem('wallet');
+        if (!connected && saved && window.cardano?.[saved]) {
+          const api = await window.cardano[saved]
+            .enable({ extensions:[{cip:95},{cip:104}] });
+          await connect(saved, api);
+        }
+      } catch (err) {
+        console.error('Auto-reconnect failed:', err);
+        localStorage.removeItem('wallet');
+        setConnectionError('ウォレット自動接続に失敗しました。手動で接続してください。');
+      }
+    };
+    
+    tryConnect();
   }, [connected, connect]);
 
   // When wallet address changes, verify it
   useEffect(() => {
-    if (connected && meshWallet && meshWallet.address && !wallet) {
-      verifyWallet(meshWallet.address);
-    }
+    const verifyAddress = async () => {
+      try {
+        if (connected && meshWallet && meshWallet.address && !wallet) {
+          await verifyWallet(meshWallet.address);
+        }
+      } catch (err) {
+        console.error('Wallet verification error:', err);
+        setConnectionError('ウォレット検証中にエラーが発生しました');
+      }
+    };
+    
+    verifyAddress();
   }, [connected, meshWallet, verifyWallet, wallet]);
 
   // Connect wallet

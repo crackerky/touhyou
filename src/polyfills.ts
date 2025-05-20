@@ -1,18 +1,16 @@
-// Set up global object before any other polyfills
+// This file sets up polyfills needed for Node.js compatibility in the browser
+
+// Global object polyfills
 window.global = window;
 globalThis.global = globalThis;
-
-// This file sets up polyfills needed for Node.js compatibility in the browser
-// No need to import Buffer directly as it's provided by vite-plugin-node-polyfills
 
 // Make sure global objects are properly defined
 window.globalThis = window.globalThis || window;
 window.process = window.process || { env: {} };
 
-// Buffer is made available globally by vite-plugin-node-polyfills
-// Just make sure it's accessible if needed
-if (!window.Buffer) {
-  console.warn('Buffer is not available globally, some features might not work');
+// Ensure Buffer is globally available
+if (typeof window.Buffer === 'undefined' && typeof global.Buffer !== 'undefined') {
+  window.Buffer = global.Buffer;
 }
 
 // Ensure proper inheritance for EventEmitter (used by streams)
