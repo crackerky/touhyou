@@ -40,7 +40,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react', '@emurgo/cardano-serialization-lib-browser'],
     esbuildOptions: {
-      target: 'esnext',
+      target: 'es2022',
       supported: {
         bigint: true
       }
@@ -48,9 +48,17 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
-    target: 'esnext',
+    target: 'es2022',
     commonjsOptions: {
-      include: [/node_modules/]
+      include: [/node_modules/],
+      transformMixedEsModules: true
+    },
+    rollupOptions: {
+      output: {
+        // Wrap the WebAssembly import in a function to avoid top-level await
+        format: 'es',
+        inlineDynamicImports: true
+      }
     }
   }
 });

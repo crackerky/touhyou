@@ -35,7 +35,9 @@ export const initCardanoLib = async (): Promise<boolean> => {
   
   try {
     // Dynamic import to avoid loading issues during initial render
-    const lib = await import('@emurgo/cardano-serialization-lib-browser');
+    // Wrapped in a function to prevent top-level await issues during build
+    const loadCardanoLib = () => import('@emurgo/cardano-serialization-lib-browser');
+    const lib = await loadCardanoLib();
     
     if (lib) {
       cardanoLib = lib;
