@@ -2,7 +2,7 @@
 import { Buffer } from 'buffer';
 
 // Make sure global objects are properly defined
-window.global = window;
+window.globalThis = window.globalThis || window;
 window.process = window.process || { env: {} };
 
 // Make Buffer available globally

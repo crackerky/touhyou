@@ -27,22 +27,10 @@ export default defineConfig({
     hmr: { overlay: false }
   },
   optimizeDeps: {
-    exclude: ['lucide-react', 'stream'],
+    exclude: ['lucide-react'],
   },
   define: {
-    global: 'globalThis',
     'process.env': process.env
-  },
-  resolve: {
-    alias: {
-      // Use explicit paths for polyfills
-      stream: 'rollup-plugin-node-polyfills/polyfills/stream',
-      events: 'rollup-plugin-node-polyfills/polyfills/events',
-      util: 'rollup-plugin-node-polyfills/polyfills/util',
-      path: 'rollup-plugin-node-polyfills/polyfills/path',
-      buffer: 'rollup-plugin-node-polyfills/polyfills/buffer-es6',
-      process: 'rollup-plugin-node-polyfills/polyfills/process-es6'
-    }
   },
   build: {
     sourcemap: true
