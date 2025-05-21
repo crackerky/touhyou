@@ -26,7 +26,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      'node-fetch': 'isomorphic-fetch'
+      'node-fetch': 'isomorphic-fetch',
+      'react-dom': 'react-dom/client'
     }
   },
   define: { 
@@ -39,6 +40,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: [
       'lucide-react',
+      'react-dom',
       '@emurgo/cardano-serialization-lib-browser',
       '@meshsdk/core',
       '@meshsdk/react'

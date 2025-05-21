@@ -1,8 +1,8 @@
 // Import polyfills first
 import './polyfills';
 
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import React, { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
 import { MeshProvider } from '@meshsdk/react';
 import ErrorBoundary from './ErrorBoundary';
 import App from './App.tsx';
@@ -41,7 +41,7 @@ const initApp = () => {
       </div>
     `;
   } else {
-    createRoot(rootElement).render(
+    ReactDOM.createRoot(rootElement).render(
       <StrictMode>
         <ErrorBoundary>
           <MeshProvider>
