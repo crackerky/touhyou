@@ -4,6 +4,7 @@ import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
+  base: './',
   plugins: [
     react(),
     wasm(),
