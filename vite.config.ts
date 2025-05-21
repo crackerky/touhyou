@@ -4,7 +4,6 @@ import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  base: './', // 追加: 相対パスでアセットを参照するように設定
   plugins: [
     react(),
     wasm(),
