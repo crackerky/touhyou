@@ -1,19 +1,30 @@
 // Set up global object before any other polyfills
 window.global = window;
 
-// This file sets up polyfills needed for Node.js compatibility in the browser
 import { Buffer } from 'buffer';
+import { Readable, Writable, Transform, Duplex } from 'stream';
 
 // Make sure global objects are properly defined
 window.globalThis = window.globalThis || window;
-window.process = window.process || { env: {} };
+window.process = window.process || { 
+  env: {},
+  nextTick: (fn: Function, ...args: any[]) => setTimeout(() => fn(...args), 0),
+  browser: true,
+  version: '',
+  platform: 'browser'
+};
 
 // Make Buffer available globally
 window.Buffer = window.Buffer || Buffer;
 
+// Set up stream classes globally
+const streamClasses = { Readable, Writable, Transform, Duplex };
+window.streamClasses = streamClasses;
+
 // Debug polyfill initialization
 console.log('Initializing polyfills...');
 console.log('Buffer polyfill loaded:', typeof Buffer !== 'undefined');
+console.log('Stream classes loaded:', Object.keys(streamClasses).join(', '));
 
 // Ensure proper inheritance for EventEmitter (used by streams)
 if (typeof window.Object.setPrototypeOf !== 'function') {

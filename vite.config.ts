@@ -13,22 +13,23 @@ export default defineConfig({
       include: [
         'buffer', 
         'process', 
-        'util', 
         'stream', 
+        'util', 
         'events',
         'path',
         'crypto'
       ],
       globals: {
         Buffer: true,
-        global: true,
-        process: true
+        process: true,
+        global: true
       },
     }),
   ],
   resolve: {
     alias: {
-      'node-fetch': 'isomorphic-fetch'
+      'node-fetch': 'isomorphic-fetch',
+      stream: 'stream-browserify'
     }
   },
   define: { 
@@ -42,9 +43,13 @@ export default defineConfig({
     exclude: ['lucide-react', '@emurgo/cardano-serialization-lib-browser'],
     esbuildOptions: {
       target: 'es2022',
+      define: {
+        global: 'globalThis'
+      },
       supported: {
         bigint: true
-      }
+      },
+      platform: 'browser'
     }
   },
   build: {
