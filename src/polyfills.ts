@@ -1,30 +1,20 @@
-// Set up global object before any other polyfills
-window.global = window;
-
-import { Buffer } from 'buffer';
-import { Readable, Writable, Transform, Duplex } from 'stream';
-
-// Make sure global objects are properly defined
-window.globalThis = window.globalThis || window;
-window.process = window.process || { 
+// Initialize global object and process
+window.global = window.global || window;
+window.process = window.process || {
   env: {},
-  nextTick: (fn: Function, ...args: any[]) => setTimeout(() => fn(...args), 0),
+  nextTick: (fn) => setTimeout(fn, 0),
   browser: true,
   version: '',
   platform: 'browser'
 };
 
-// Make Buffer available globally
-window.Buffer = window.Buffer || Buffer;
-
-// Set up stream classes globally
-const streamClasses = { Readable, Writable, Transform, Duplex };
-window.streamClasses = streamClasses;
+// Ensure globalThis is available
+window.globalThis = window.globalThis || window;
 
 // Debug polyfill initialization
 console.log('Initializing polyfills...');
-console.log('Buffer polyfill loaded:', typeof Buffer !== 'undefined');
-console.log('Stream classes loaded:', Object.keys(streamClasses).join(', '));
+console.log('Buffer available:', typeof window.Buffer !== 'undefined');
+console.log('Process available:', typeof window.process !== 'undefined');
 
 // Ensure proper inheritance for EventEmitter (used by streams)
 if (typeof window.Object.setPrototypeOf !== 'function') {

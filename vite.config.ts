@@ -9,27 +9,24 @@ export default defineConfig({
     react(),
     wasm(),
     nodePolyfills({
-      // Explicitly specify which polyfills to include
       include: [
         'buffer', 
-        'process', 
         'stream', 
-        'util', 
+        'process',
         'events',
-        'path',
         'crypto'
       ],
       globals: {
         Buffer: true,
-        process: true,
-        global: true
+        global: true,
+        process: true
       },
+      protocolImports: true
     }),
   ],
   resolve: {
     alias: {
-      'node-fetch': 'isomorphic-fetch',
-      stream: 'stream-browserify'
+      'node-fetch': 'isomorphic-fetch'
     }
   },
   define: { 
@@ -40,7 +37,12 @@ export default defineConfig({
     hmr: { overlay: false }
   },
   optimizeDeps: {
-    exclude: ['lucide-react', '@emurgo/cardano-serialization-lib-browser'],
+    exclude: [
+      'lucide-react',
+      '@emurgo/cardano-serialization-lib-browser',
+      '@meshsdk/core',
+      '@meshsdk/react'
+    ],
     esbuildOptions: {
       target: 'es2022',
       define: {
