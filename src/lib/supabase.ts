@@ -1,15 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
 
-// Use environment variables instead of hardcoded values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase configuration. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
-  );
-}
+const supabaseUrl = 'https://tglusypjjcoxkhepmxtx.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRnbHVzeXBqamNveGtoZXBteHR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3MTk0MDEsImV4cCI6MjA2MzI5NTQwMX0.XYSiCjWVfjVeOOUeLC1WQ8mLjF1cMQjUeGUrrmg6r98';
 
 console.log('Initializing Supabase with URL:', supabaseUrl);
 
