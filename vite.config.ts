@@ -26,8 +26,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      'node-fetch': 'isomorphic-fetch',
-      'react-dom': 'react-dom/client'
+      'node-fetch': 'isomorphic-fetch'
     }
   },
   define: { 
