@@ -2,7 +2,35 @@
 
 ## Setup
 
-This project uses Supabase. Before running the application copy `.env.example` to
-`.env` and provide values for `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_ANON_KEY`. The application will throw an error if these
-variables are missing.
+# touhyou
+
+ウォレット認証投票システム - Cardanoブロックチェーンを使った分散型投票アプリケーション
+
+## 🚀 主な機能
+
+- 🔐 Cardanoウォレット認証による本人確認
+- 📊 リアルタイム投票・結果表示
+- 🎨 モダンUI（React + TypeScript + TailwindCSS）
+- 🔄 重複投票防止システム
+
+## 🛠️ 技術スタック
+
+- **フロントエンド**: React 18, TypeScript, Vite
+- **ウォレット連携**: MeshSDK (Cardano)
+- **データベース**: Supabase
+- **スタイリング**: TailwindCSS, Framer Motion
+- **状態管理**: Zustand
+
+## 📋 必要な環境
+
+- Node.js 18+ 
+- npm または yarn
+- Supabaseアカウント
+
+## ⚡ セットアップ手順
+
+### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/crackerky/touhyou.git
+cd touhyou
