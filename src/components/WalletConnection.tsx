@@ -516,9 +516,12 @@ export default function WalletConnection() {
             )}
 
             <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-medium text-blue-900 mb-2">🚀 ワンタップ接続</h3>
-              <p className="text-sm text-blue-800 mb-4">
-                ウォレットアプリに直接接続してコピペ不要で投票参加！
+              <h3 className="font-medium text-blue-900 mb-2">📲 重要なお知らせ</h3>
+              <p className="text-sm text-blue-800 mb-2">
+                <strong>スマホではアプリの自動検出ができません。</strong>
+              </p>
+              <p className="text-sm text-blue-800">
+                お持ちのウォレットアプリボタンをタップしてください。アプリがない場合は自動でストアに移動します。
               </p>
             </div>
 
@@ -528,15 +531,29 @@ export default function WalletConnection() {
                   key={walletApp.name}
                   onClick={() => openWalletApp(walletApp)}
                   variant="outline"
-                  className="h-20 flex flex-col items-center justify-center gap-2 p-4"
+                  className="h-24 flex flex-col items-center justify-center gap-2 p-4 relative"
                 >
-                  <span className="text-2xl">{walletApp.icon}</span>
+                  <span className="text-3xl">{walletApp.icon}</span>
                   <div className="text-center">
-                    <div className="font-medium">{walletApp.name}</div>
-                    <div className="text-xs text-gray-500">アプリで開く</div>
+                    <div className="font-medium text-sm">{walletApp.name}</div>
+                    <div className="text-xs text-gray-500">
+                      {walletApp.name === 'Tokeo' ? 'お持ちの場合はタップ' : 'アプリで開く'}
+                    </div>
                   </div>
                 </Button>
               ))}
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm">
+              <div className="flex items-start gap-2">
+                <span>💡</span>
+                <div>
+                  <p className="font-medium text-yellow-800 mb-1">ヒント</p>
+                  <p className="text-yellow-700">
+                    Tokeoアプリをお持ちの場合は「🚀 Tokeo」ボタンをタップ。アプリが開かない場合は手動入力をお試しください。
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="border-t pt-4 space-y-2">
@@ -559,10 +576,6 @@ export default function WalletConnection() {
                 <Copy className="w-4 h-4" />
                 手動でアドレス入力
               </Button>
-            </div>
-
-            <div className="text-center text-xs text-gray-500">
-              💡 Tokeoアプリがある場合は「Tokeo」ボタンをタップ
             </div>
           </CardContent>
           <CardFooter className="text-xs text-slate-500 justify-center">
