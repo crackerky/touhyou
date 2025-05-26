@@ -20,9 +20,24 @@ export default function VotingSection() {
   }, [wallet, hasVoted, isLoading, error]);
 
   const options = [
-    { id: 'option1', name: '選択肢 1', description: '1つ目の投票選択肢' },
-    { id: 'option2', name: '選択肢 2', description: '2つ目の投票選択肢' },
-    { id: 'option3', name: '選択肢 3', description: '3つ目の投票選択肢' }
+    { 
+      id: 'banana', 
+      name: '🍌 バナナ', 
+      description: '甘くて栄養満点の黄色い果物',
+      emoji: '🍌'
+    },
+    { 
+      id: 'apple', 
+      name: '🍎 リンゴ', 
+      description: '赤くて美味しい定番の果物',
+      emoji: '🍎'
+    },
+    { 
+      id: 'orange', 
+      name: '🍊 オレンジ', 
+      description: 'ビタミンCが豊富な柑橘類',
+      emoji: '🍊'
+    }
   ];
 
   const containerVariants = {
@@ -78,15 +93,19 @@ export default function VotingSection() {
             <div className="flex items-center justify-center">
               <CheckCircle className="h-12 w-12 text-green-500 mb-2" />
             </div>
-            <CardTitle className="text-center">投票ありがとうございます！</CardTitle>
+            <CardTitle className="text-center">🎉 投票ありがとうございます！</CardTitle>
             <CardDescription className="text-center">
-              あなたの投票が正常に記録されました。
+              あなたの好きな果物への投票が正常に記録されました。
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center">
               <p className="font-medium">
                 ウォレット: <span className="font-normal">{truncateAddress(wallet || '')}</span>
+              </p>
+              <div className="mt-4 text-4xl">🍓</div>
+              <p className="text-sm text-gray-600 mt-2">
+                NFTは後日配布予定です
               </p>
             </div>
           </CardContent>
@@ -116,10 +135,10 @@ export default function VotingSection() {
         <CardHeader>
           <div className="flex items-center mb-2">
             <VoteIcon size={24} className="text-blue-600 mr-2" />
-            <CardTitle>投票する</CardTitle>
+            <CardTitle>🍎 好きな果物を投票</CardTitle>
           </div>
           <CardDescription>
-            以下の選択肢から一つを選んで投票してください。この操作は取り消せません。
+            以下の果物から一番好きなものを選んで投票してください。この操作は取り消せません。
           </CardDescription>
           {wallet && (
             <p className="text-sm mt-2">
@@ -140,20 +159,25 @@ export default function VotingSection() {
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full justify-start h-auto py-4 hover:border-blue-500 hover:bg-blue-50 transition-all"
+                className="w-full justify-start h-auto py-4 hover:border-blue-500 hover:bg-blue-50 transition-all group"
                 onClick={() => handleVote(option.id)}
                 disabled={isLoading}
               >
-                <div className="text-left">
-                  <p className="font-medium">{option.name}</p>
-                  <p className="text-sm text-slate-500">{option.description}</p>
+                <div className="flex items-center w-full text-left">
+                  <div className="text-3xl mr-4 group-hover:scale-110 transition-transform">
+                    {option.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-lg">{option.name}</p>
+                    <p className="text-sm text-slate-500">{option.description}</p>
+                  </div>
                 </div>
               </Button>
             </motion.div>
           ))}
         </CardContent>
         <CardFooter className="text-xs text-slate-500 justify-center">
-          あなたの投票はデータベースに安全に記録されます。
+          🎯 投票参加者にはNFTを配布予定です
         </CardFooter>
       </Card>
     </motion.div>
