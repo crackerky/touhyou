@@ -23,7 +23,16 @@ export const useVoteStore = create<VoteState>((set, get) => ({
   hasVoted: false,
   isLoading: false,
   error: null,
-  votes: { 'option1': 0, 'option2': 0, 'option3': 0 },
+  // 果物の投票オプションに更新（後方互換性も考慮）
+  votes: { 
+    'banana': 0, 
+    'apple': 0, 
+    'orange': 0,
+    // 古いキーも保持（既存データとの互換性のため）
+    'option1': 0, 
+    'option2': 0, 
+    'option3': 0 
+  },
 
   verifyWallet: async (address: string) => {
     try {
@@ -233,7 +242,15 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         return;
       }
 
-      const voteCounts: Record<string, number> = { 'option1': 0, 'option2': 0, 'option3': 0 };
+      // 果物の投票カウントを初期化（新旧両方のキーに対応）
+      const voteCounts: Record<string, number> = { 
+        'banana': 0, 
+        'apple': 0, 
+        'orange': 0,
+        'option1': 0, 
+        'option2': 0, 
+        'option3': 0 
+      };
       
       data?.forEach(vote => {
         if (voteCounts[vote.option] !== undefined) {
