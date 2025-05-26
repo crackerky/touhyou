@@ -176,6 +176,7 @@ export default function WalletConnection() {
                 <li><a href="https://namiwallet.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Nami</a></li>
                 <li><a href="https://flint-wallet.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Flint</a></li>
                 <li><a href="https://eternl.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Eternl</a></li>
+                <li><a href="https://tokeo.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Tokeo</a></li>
               </ul>
             </div>
             <p className="text-sm text-slate-500">
