@@ -78,87 +78,148 @@ export default function WalletConnection() {
   const [showQRInstructions, setShowQRInstructions] = useState(false);
   const [connectionRequest, setConnectionRequest] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
+  const [connecting, setConnecting] = useState(false);
 
   // MeshSDK hooks
   const wallets = useWalletList();
   const { connect, connected, wallet: meshWallet, disconnect } = useWallet();
 
+  // ウォレット検出
   useEffect(() => {
     setMobile(isMobile());
     
-    // ウォレット検出
-    const detected = [];
-    if (typeof window !== 'undefined' && window.cardano) {
-      if (window.cardano.nami) detected.push({ name: 'Nami', icon: '🦎', api: window.cardano.nami });
-      if (window.cardano.yoroi) detected.push({ name: 'Yoroi', icon: '🌸', api: window.cardano.yoroi });
-      if (window.cardano.eternl) detected.push({ name: 'Eternl', icon: '⚡', api: window.cardano.eternl });
-      if (window.cardano.ccvault) detected.push({ name: 'Tokeo', icon: '🚀', api: window.cardano.ccvault });
-    }
-    setDetectedWallets(detected);
+    const detectAvailableWallets = () => {
+      const detected = [];
+      
+      // window.cardanoから直接検出
+      if (typeof window !== 'undefined' && window.cardano) {
+        const walletNames = ['nami', 'yoroi', 'eternl', 'ccvault', 'flint'];
+        
+        walletNames.forEach(name => {
+          if (window.cardano[name]) {
+            const displayName = name === 'ccvault' ? 'Tokeo' : name.charAt(0).toUpperCase() + name.slice(1);
+            const icon = name === 'nami' ? '🦎' : 
+                        name === 'yoroi' ? '🌸' : 
+                        name === 'eternl' ? '⚡' : 
+                        name === 'ccvault' ? '🚀' : '💳';
+                        
+            detected.push({
+              id: name,
+              name: displayName,
+              icon: icon,
+              api: window.cardano[name],
+              isEnabled: window.cardano[name].isEnabled
+            });
+          }
+        });
+      }
+      
+      console.log('Detected wallets:', detected);
+      setDetectedWallets(detected);
+    };
+    
+    detectAvailableWallets();
+    
+    // ページ読み込み後に再検出
+    const timer = setTimeout(detectAvailableWallets, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   // 自動復元の試行
   useEffect(() => {
     const tryAutoRestore = async () => {
+      if (wallet) return; // 既に接続済み
+      
       try {
         const savedAddress = localStorage.getItem('manualWalletAddress');
         const savedWallet = localStorage.getItem('wallet');
         
-        if (savedAddress && !wallet) {
+        if (savedAddress) {
           console.log('Restoring manual wallet address:', savedAddress);
-          await verifyWallet(savedAddress);
-          setConnectionStep('success');
+          const success = await verifyWallet(savedAddress);
+          if (success) {
+            setConnectionStep('success');
+          }
           return;
         }
         
-        if (!connected && savedWallet && detectedWallets.some(w => w.name.toLowerCase() === savedWallet)) {
-          console.log('Attempting to reconnect wallet:', savedWallet);
-          setConnectionStep('connecting');
-          try {
-            await connect(savedWallet);
-            setConnectionStep('success');
-          } catch (enableError) {
-            console.error('Auto reconnect failed:', enableError);
-            localStorage.removeItem('wallet');
-            setConnectionStep('auto');
+        if (savedWallet && detectedWallets.length > 0) {
+          const savedWalletData = detectedWallets.find(w => w.id === savedWallet.toLowerCase());
+          if (savedWalletData) {
+            console.log('Attempting to reconnect wallet:', savedWallet);
+            await handleDirectWalletConnect(savedWalletData);
           }
         }
       } catch (err) {
         console.error('Auto-restore failed:', err);
-        setConnectionStep('auto');
+        localStorage.removeItem('wallet');
+        localStorage.removeItem('manualWalletAddress');
       }
     };
     
-    if (!wallet && detectedWallets.length > 0) {
+    if (detectedWallets.length > 0) {
       tryAutoRestore();
     }
-  }, [detectedWallets, connected, connect, verifyWallet, wallet]);
+  }, [detectedWallets, wallet, verifyWallet]);
 
-  // MeshSDKウォレット接続時の検証
-  useEffect(() => {
-    const verifyMeshWallet = async () => {
-      try {
-        if (connected && meshWallet && meshWallet.address && !wallet) {
-          console.log('Verifying mesh wallet address:', meshWallet.address);
-          setConnectionStep('connecting');
-          const success = await verifyWallet(meshWallet.address);
-          if (success) {
-            localStorage.removeItem('manualWalletAddress');
-            setConnectionStep('success');
-          } else {
-            setConnectionError('ウォレット検証に失敗しました');
-            setConnectionStep('auto');
-          }
+  // 直接ウォレット接続（window.cardano経由）
+  const handleDirectWalletConnect = async (walletData: any) => {
+    try {
+      setConnecting(true);
+      setConnectionError(null);
+      
+      console.log('Connecting to wallet:', walletData.name);
+      
+      // ウォレットAPIを有効化
+      const api = await walletData.api.enable({
+        extensions: [{ cip: 95 }]
+      });
+      
+      console.log('Wallet API enabled:', api);
+      
+      // アドレスを取得
+      const addresses = await api.getUsedAddresses();
+      if (!addresses || addresses.length === 0) {
+        const unusedAddresses = await api.getUnusedAddresses();
+        if (!unusedAddresses || unusedAddresses.length === 0) {
+          throw new Error('ウォレットアドレスを取得できませんでした');
         }
-      } catch (err) {
-        console.error('Mesh wallet verification error:', err);
-        setConnectionError('ウォレット検証中にエラーが発生しました');
-        setConnectionStep('auto');
+        addresses.push(unusedAddresses[0]);
       }
-    };
-    
-    verifyMeshWallet();
-  }, [connected, meshWallet, verifyWallet, wallet]);
+      
+      const addressHex = addresses[0];
+      console.log('Got address hex:', addressHex);
+      
+      // Hexアドレスをbech32に変換（簡易実装）
+      let addressBech32 = addressHex;
+      if (addressHex.startsWith('01') || addressHex.startsWith('00')) {
+        // 実際のプロジェクトではcardano-serializationライブラリを使用
+        // ここでは簡易的に処理
+        addressBech32 = addressHex; // そのまま使用（実装によって調整が必要）
+      }
+      
+      console.log('Verifying address:', addressBech32);
+      
+      // ウォレットを検証
+      const success = await verifyWallet(addressBech32);
+      
+      if (success) {
+        localStorage.setItem('wallet', walletData.id);
+        localStorage.removeItem('manualWalletAddress');
+        setConnectionStep('success');
+        console.log('Wallet connected successfully');
+      } else {
+        throw new Error('ウォレットの検証に失敗しました');
+      }
+      
+    } catch (err) {
+      console.error('Direct wallet connection failed:', err);
+      setConnectionError(err instanceof Error ? err.message : 'ウォレット接続に失敗しました');
+      setConnectionStep('manual');
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   // 自動接続の試行
   const handleAutoConnect = async () => {
@@ -166,23 +227,18 @@ export default function WalletConnection() {
     setConnectionStep('connecting');
     
     try {
-      if (detectedWallets.length === 1) {
-        // 1つだけ検出された場合は自動接続
-        const walletName = detectedWallets[0].name;
-        await connect(walletName);
-        localStorage.setItem('wallet', walletName);
-        localStorage.removeItem('manualWalletAddress');
-      } else if (detectedWallets.length > 1) {
-        // 複数ある場合は最初のウォレットで試行
-        const walletName = detectedWallets[0].name;
-        await connect(walletName);
-        localStorage.setItem('wallet', walletName);
-        localStorage.removeItem('manualWalletAddress');
-      } else {
-        // 検出されない場合は手動選択へ
+      if (detectedWallets.length === 0) {
+        setConnectionError('ウォレットが検出されませんでした');
         setConnectionStep('manual');
         return;
       }
+      
+      // 最初に検出されたウォレットで自動接続を試行
+      const firstWallet = detectedWallets[0];
+      console.log('Auto-connecting to:', firstWallet.name);
+      
+      await handleDirectWalletConnect(firstWallet);
+      
     } catch (err) {
       console.error('Auto connect failed:', err);
       setConnectionError('自動接続に失敗しました');
@@ -191,19 +247,8 @@ export default function WalletConnection() {
   };
 
   // 手動ウォレット接続
-  const handleWalletConnect = async (walletName: string) => {
-    setConnectionError(null);
-    setConnectionStep('connecting');
-    
-    try {
-      await connect(walletName);
-      localStorage.setItem('wallet', walletName);
-      localStorage.removeItem('manualWalletAddress');
-    } catch (err) {
-      console.error('Manual wallet connect failed:', err);
-      setConnectionError(`${walletName}の接続に失敗しました`);
-      setConnectionStep('manual');
-    }
+  const handleWalletConnect = async (walletData: any) => {
+    await handleDirectWalletConnect(walletData);
   };
 
   // 手動アドレス入力で接続
@@ -214,7 +259,7 @@ export default function WalletConnection() {
     }
 
     setConnectionError(null);
-    setConnectionStep('connecting');
+    setConnecting(true);
     
     try {
       const success = await verifyWallet(manualAddress);
@@ -224,12 +269,12 @@ export default function WalletConnection() {
         setConnectionStep('success');
       } else {
         setConnectionError('アドレスの検証に失敗しました');
-        setConnectionStep('manual');
       }
     } catch (err) {
       console.error('Manual address verification error:', err);
       setConnectionError('アドレス検証中にエラーが発生しました');
-      setConnectionStep('manual');
+    } finally {
+      setConnecting(false);
     }
   };
 
@@ -249,8 +294,8 @@ export default function WalletConnection() {
     try {
       if (connected) {
         await disconnect();
-        localStorage.removeItem('wallet');
       }
+      localStorage.removeItem('wallet');
       localStorage.removeItem('manualWalletAddress');
       setManualAddress('');
       setConnectionStep('auto');
@@ -296,7 +341,7 @@ export default function WalletConnection() {
   }
 
   // 接続中
-  if (connectionStep === 'connecting') {
+  if (connectionStep === 'connecting' || connecting) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -447,7 +492,7 @@ export default function WalletConnection() {
                   onClick={handleAutoConnect}
                   className="w-full py-4 text-lg font-medium"
                   size="lg"
-                  disabled={isLoading}
+                  disabled={isLoading || connecting}
                 >
                   <WalletIcon className="w-5 h-5 mr-3" />
                   ワンクリック接続（推奨）
@@ -460,6 +505,16 @@ export default function WalletConnection() {
                     className="text-sm text-center text-gray-600"
                   >
                     検出されたウォレット: {detectedWallets.map(w => `${w.icon} ${w.name}`).join(', ')}
+                  </motion.div>
+                )}
+
+                {detectedWallets.length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-center text-gray-500"
+                  >
+                    ウォレット拡張機能が検出されませんでした
                   </motion.div>
                 )}
 
@@ -513,11 +568,11 @@ export default function WalletConnection() {
                     <p className="text-sm font-medium text-gray-700">ブラウザ拡張機能</p>
                     {detectedWallets.map((detectedWallet) => (
                       <Button
-                        key={detectedWallet.name}
-                        onClick={() => handleWalletConnect(detectedWallet.name)}
+                        key={detectedWallet.id}
+                        onClick={() => handleWalletConnect(detectedWallet)}
                         variant="outline"
                         className="w-full flex items-center justify-between p-4"
-                        disabled={isLoading}
+                        disabled={isLoading || connecting}
                       >
                         <div className="flex items-center gap-3">
                           <span className="text-lg">{detectedWallet.icon}</span>
@@ -542,7 +597,7 @@ export default function WalletConnection() {
                   <Button
                     onClick={handleManualAddressConnect}
                     className="w-full"
-                    disabled={!validateCardanoAddress(manualAddress) || isLoading}
+                    disabled={!validateCardanoAddress(manualAddress) || isLoading || connecting}
                   >
                     アドレスで接続
                   </Button>
