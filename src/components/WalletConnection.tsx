@@ -365,6 +365,11 @@ export default function WalletConnection() {
                           📱 Eternl Mobile
                         </a>
                       </li>
+                      <li>
+                        <a href="https://tokeo.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">
+                          📱 Tokeo Mobile
+                        </a>
+                      </li>
                     </ul>
                   </div>
                   <Button 
