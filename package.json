@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "NODE_OPTIONS=--max_old_space_size=8192 vite build",
@@ -23,7 +27,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.4.1",
-    "react-qr-code": "^2.0.12",
+    "react-qr-code": "^2.0.15",
     "stream": "^0.0.2",
     "stream-browserify": "^3.0.0",
     "tailwind-merge": "^2.2.1",
