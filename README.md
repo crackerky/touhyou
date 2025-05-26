@@ -39,6 +39,7 @@
 - [Yoroi Wallet](https://yoroi-wallet.com/) - iOS/Android
 - [Nami Mobile](https://namiwallet.io/) - モバイルブラウザ
 - [Eternl Mobile](https://eternl.io/) - iOS/Android
+- [Tokeo Mobile](https://tokeo.io/) - モバイル対応
 
 ### ✍️ 手動アドレス入力の手順
 
@@ -119,7 +120,11 @@ yarn dev
 3. 投票に参加
 
 ### スマホユーザー
-1. Cardanoウォレットアプリをダウンロード
+1. Cardanoウォレットアプリをダウンロード：
+   - Yoroi Wallet
+   - Nami Mobile  
+   - Eternl Mobile
+   - Tokeo Mobile
 2. ウォレットを作成してアドレスを取得
 3. 「手動入力」タブでアドレスを入力
 4. 投票に参加
