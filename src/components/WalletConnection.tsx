@@ -5,15 +5,12 @@ import QRCode from 'react-qr-code';
 import { Button } from './ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
 import { useVoteStore } from '../store/voteStore';
-import { truncateAddress } from '../lib/utils';
+import { truncateAddress, normalizeCardanoAddress, isCardanoAddressFormatValid } from '../lib/utils';
 import { useWalletList, useWallet } from '@meshsdk/react';
 
-// Cardanoアドレスの基本的な検証
+// Cardanoアドレスの基本的な検証（更新版）
 const validateCardanoAddress = (address: string): boolean => {
-  if (!address || address.length < 50) return false;
-  const bech32Pattern = /^addr1[a-z0-9]{50,}/;
-  const legacyPattern = /^[A-Za-z0-9]{50,}/;
-  return bech32Pattern.test(address) || legacyPattern.test(address);
+  return isCardanoAddressFormatValid(address);
 };
 
 // モバイル検出
@@ -187,6 +184,7 @@ export default function WalletConnection() {
       
       console.log('Wallet API enabled:', api);
       
+      // アドレスを取得
       const addresses = await api.getUsedAddresses();
       if (!addresses || addresses.length === 0) {
         const unusedAddresses = await api.getUnusedAddresses();
@@ -197,16 +195,25 @@ export default function WalletConnection() {
       }
       
       const addressHex = addresses[0];
-      console.log('Got address hex:', addressHex);
+      console.log('Got raw address:', addressHex);
       
-      let addressBech32 = addressHex;
-      if (addressHex.startsWith('01') || addressHex.startsWith('00')) {
-        addressBech32 = addressHex;
+      // HexアドレスをBech32に正規化
+      const normalizedAddress = await normalizeCardanoAddress(addressHex);
+      console.log('Normalized address:', normalizedAddress);
+      
+      // アドレスの基本検証
+      if (!validateCardanoAddress(normalizedAddress) && !validateCardanoAddress(addressHex)) {
+        throw new Error('取得されたアドレスの形式が無効です');
       }
       
-      console.log('Verifying address:', addressBech32);
+      console.log('Verifying address:', normalizedAddress);
       
-      const success = await verifyWallet(addressBech32);
+      // 正規化されたアドレスで検証を試行、失敗したらHexアドレスで試行
+      let success = await verifyWallet(normalizedAddress);
+      if (!success && normalizedAddress !== addressHex) {
+        console.log('Trying with hex address:', addressHex);
+        success = await verifyWallet(addressHex);
+      }
       
       if (success) {
         localStorage.setItem('wallet', walletData.id);
@@ -302,9 +309,13 @@ export default function WalletConnection() {
     setConnecting(true);
     
     try {
-      const success = await verifyWallet(manualAddress);
+      // アドレスを正規化
+      const normalizedAddress = await normalizeCardanoAddress(manualAddress);
+      
+      // 正規化されたアドレスで検証を試行
+      const success = await verifyWallet(normalizedAddress);
       if (success) {
-        localStorage.setItem('manualWalletAddress', manualAddress);
+        localStorage.setItem('manualWalletAddress', normalizedAddress);
         localStorage.removeItem('wallet');
         setConnectionStep('success');
       } else {
@@ -706,7 +717,7 @@ export default function WalletConnection() {
                     type="text"
                     value={manualAddress}
                     onChange={(e) => setManualAddress(e.target.value)}
-                    placeholder="addr1..."
+                    placeholder="addr1... または Hexアドレス"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-blue-500 focus:outline-none"
                   />
                   <Button
