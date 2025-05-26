@@ -18,7 +18,7 @@ function App() {
   }, [error]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 via-yellow-50 to-red-50 flex flex-col">
       <Toaster position="top-center" />
       
       <header className="py-6 px-4 text-center">
@@ -26,10 +26,14 @@ function App() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center justify-center gap-2"
+          className="inline-flex items-center justify-center gap-3"
         >
-          <VoteIcon size={28} className="text-blue-600" />
-          <h1 className="text-2xl font-bold text-slate-900">ウォレット認証投票システム</h1>
+          <div className="text-3xl">🍎</div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">好きな果物投票</h1>
+            <p className="text-sm text-slate-600 mt-1">Cardanoウォレット認証システム</p>
+          </div>
+          <div className="text-3xl">🍌</div>
         </motion.div>
       </header>
       
@@ -52,8 +56,13 @@ function App() {
       </main>
       
       <footer className="py-6 px-4 text-center text-slate-500 text-sm">
-        <p>
-          ウォレット認証投票デモ &copy; {new Date().getFullYear()}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span>🍊</span>
+          <p>好きな果物投票デモ &copy; {new Date().getFullYear()}</p>
+          <span>🍎</span>
+        </div>
+        <p className="text-xs">
+          ウォレット認証で安全な投票を実現
         </p>
       </footer>
     </div>
