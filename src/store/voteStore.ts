@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
-import { isValidEthereumAddress, isCardanoAddressFormatValid } from '../lib/utils';
+import { isValidEthereumAddress, isCardanoAddressFormatValid, normalizeCardanoAddress } from '../lib/utils';
 import { isValidCardanoAddress } from '../lib/wallet';
 
 interface VoteState {
@@ -29,6 +29,8 @@ export const useVoteStore = create<VoteState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       
+      console.log('Verifying wallet address:', address);
+      
       // First check format with regex (fast)
       const isValidFormat = isValidEthereumAddress(address) || isCardanoAddressFormatValid(address);
       
@@ -51,21 +53,60 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         }
       }
 
-      // ウォレットが存在するか確認
-      const { data: existingWallet, error: fetchError } = await supabase
+      // アドレスを正規化（必要に応じて）
+      let normalizedAddress = address;
+      try {
+        normalizedAddress = await normalizeCardanoAddress(address);
+        console.log('Normalized address:', normalizedAddress);
+      } catch (err) {
+        console.warn('Address normalization failed, using original:', err);
+        normalizedAddress = address;
+      }
+
+      // 複数の形式のアドレスをチェック（HexとBech32の両方）
+      const addressesToCheck = [normalizedAddress];
+      if (normalizedAddress !== address) {
+        addressesToCheck.push(address);
+      }
+
+      console.log('Checking addresses:', addressesToCheck);
+
+      // ウォレットが存在するか確認（複数のアドレス形式をチェック）
+      const { data: existingWallets, error: fetchError } = await supabase
         .from('wallets')
         .select('*')
-        .eq('address', address)
-        .single();
+        .in('address', addressesToCheck)
+        .order('created_at', { ascending: false }); // 最新のレコードを優先
 
-      if (fetchError && fetchError.message !== 'No rows found') {
+      if (fetchError) {
+        console.error('Database fetch error:', fetchError);
         set({ error: `データの取得に失敗しました: ${fetchError.message}`, isLoading: false });
         return false;
       }
 
-      if (existingWallet) {
+      // 既存のウォレットが見つかった場合
+      if (existingWallets && existingWallets.length > 0) {
+        const existingWallet = existingWallets[0]; // 最新のレコードを使用
+        console.log('Found existing wallet:', existingWallet);
+        
+        // 重複レコードがある場合は古いものを削除
+        if (existingWallets.length > 1) {
+          console.log('Found duplicate wallets, cleaning up...');
+          const walletsToDelete = existingWallets.slice(1).map(w => w.id);
+          const { error: deleteError } = await supabase
+            .from('wallets')
+            .delete()
+            .in('id', walletsToDelete);
+          
+          if (deleteError) {
+            console.warn('Failed to clean up duplicate wallets:', deleteError);
+          } else {
+            console.log('Cleaned up duplicate wallets');
+          }
+        }
+
         set({ 
-          wallet: existingWallet.address,
+          wallet: normalizedAddress, // 正規化されたアドレスを使用
           isVerified: true,
           hasVoted: existingWallet.has_voted,
           isLoading: false
@@ -74,23 +115,52 @@ export const useVoteStore = create<VoteState>((set, get) => ({
       }
 
       // 新しいウォレットレコードを作成
-      const { error: insertError } = await supabase
+      console.log('Creating new wallet record for:', normalizedAddress);
+      const { data: newWallet, error: insertError } = await supabase
         .from('wallets')
-        .insert([{ address, has_voted: false }]);
+        .insert([{ address: normalizedAddress, has_voted: false }])
+        .select()
+        .single();
 
       if (insertError) {
+        console.error('Wallet insertion error:', insertError);
+        
+        // 重複キーエラーの場合は再度検索を試行
+        if (insertError.code === '23505') {
+          console.log('Duplicate key detected, retrying fetch...');
+          const { data: retryWallets, error: retryError } = await supabase
+            .from('wallets')
+            .select('*')
+            .in('address', addressesToCheck)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (!retryError && retryWallets && retryWallets.length > 0) {
+            const wallet = retryWallets[0];
+            set({ 
+              wallet: normalizedAddress,
+              isVerified: true,
+              hasVoted: wallet.has_voted,
+              isLoading: false
+            });
+            return true;
+          }
+        }
+        
         set({ error: `ウォレット登録に失敗しました: ${insertError.message}`, isLoading: false });
         return false;
       }
 
+      console.log('Successfully created wallet:', newWallet);
       set({ 
-        wallet: address, 
+        wallet: normalizedAddress, 
         isVerified: true,
         hasVoted: false, 
         isLoading: false
       });
       return true;
     } catch (error) {
+      console.error('Wallet verification error:', error);
       const errorMessage = error instanceof Error ? error.message : '不明なエラー';
       set({ error: `ウォレットの検証に失敗しました: ${errorMessage}`, isLoading: false });
       return false;
@@ -108,12 +178,15 @@ export const useVoteStore = create<VoteState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
 
+      console.log('Casting vote for wallet:', wallet, 'option:', option);
+
       // 投票を挿入
       const { error: voteError } = await supabase
         .from('votes')
         .insert([{ wallet_address: wallet, option }]);
 
       if (voteError) {
+        console.error('Vote insertion error:', voteError);
         set({ error: `投票登録に失敗しました: ${voteError.message}`, isLoading: false });
         return false;
       }
@@ -125,6 +198,7 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .eq('address', wallet);
 
       if (updateError) {
+        console.error('Wallet update error:', updateError);
         set({ error: `ウォレット状態の更新に失敗しました: ${updateError.message}`, isLoading: false });
         return false;
       }
@@ -135,8 +209,10 @@ export const useVoteStore = create<VoteState>((set, get) => ({
       // 投票数を更新
       await get().getVoteCounts();
       
+      console.log('Vote cast successfully');
       return true;
     } catch (error) {
+      console.error('Vote casting error:', error);
       const errorMessage = error instanceof Error ? error.message : '不明なエラー';
       set({ error: `投票に失敗しました: ${errorMessage}`, isLoading: false });
       return false;
@@ -152,6 +228,7 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         .select('option');
 
       if (error) {
+        console.error('Vote counts fetch error:', error);
         set({ error: `投票データの取得に失敗しました: ${error.message}`, isLoading: false });
         return;
       }
@@ -164,14 +241,17 @@ export const useVoteStore = create<VoteState>((set, get) => ({
         }
       });
 
+      console.log('Updated vote counts:', voteCounts);
       set({ votes: voteCounts, isLoading: false });
     } catch (error) {
+      console.error('Get vote counts error:', error);
       const errorMessage = error instanceof Error ? error.message : '不明なエラー';
       set({ error: `投票数の取得に失敗しました: ${errorMessage}`, isLoading: false });
     }
   },
 
   reset: () => {
+    console.log('Resetting vote store');
     set({
       wallet: null,
       isVerified: false,
