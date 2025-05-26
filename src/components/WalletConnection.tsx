@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { WalletIcon, AlertCircle, Smartphone, Edit3, QrCode, CheckCircle, ExternalLink, Copy, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { WalletIcon, AlertCircle, Smartphone, Monitor, QrCode, CheckCircle, ExternalLink, Copy, ArrowLeft, Loader2 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { Button } from './ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './ui/Card';
@@ -25,7 +25,18 @@ const isMobile = () => {
 // ウォレットアプリの情報
 const walletApps = [
   {
+    name: 'Nami',
+    icon: '🦎',
+    scheme: 'nami://',
+    downloadUrl: 'https://namiwallet.io/',
+    storeLinks: {
+      ios: 'https://apps.apple.com/app/nami-wallet/id1634415647',
+      android: 'https://namiwallet.io/'
+    }
+  },
+  {
     name: 'Yoroi',
+    icon: '🌸',
     scheme: 'yoroi://',
     downloadUrl: 'https://yoroi-wallet.com/',
     storeLinks: {
@@ -34,16 +45,8 @@ const walletApps = [
     }
   },
   {
-    name: 'Nami',
-    scheme: 'nami://',
-    downloadUrl: 'https://namiwallet.io/',
-    storeLinks: {
-      ios: 'https://namiwallet.io/',
-      android: 'https://namiwallet.io/'
-    }
-  },
-  {
     name: 'Eternl',
+    icon: '⚡',
     scheme: 'eternl://',
     downloadUrl: 'https://eternl.io/',
     storeLinks: {
@@ -53,6 +56,7 @@ const walletApps = [
   },
   {
     name: 'Tokeo',
+    icon: '🚀',
     scheme: 'tokeo://',
     downloadUrl: 'https://tokeo.io/',
     storeLinks: {
@@ -62,218 +66,182 @@ const walletApps = [
   }
 ];
 
+type ConnectionStep = 'auto' | 'manual' | 'qr' | 'connecting' | 'success';
+
 export default function WalletConnection() {
   const { verifyWallet, isLoading, error, wallet } = useVoteStore();
+  const [connectionStep, setConnectionStep] = useState<ConnectionStep>('auto');
+  const [detectedWallets, setDetectedWallets] = useState<any[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
-  const [connectInProgress, setConnectInProgress] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'extension' | 'manual' | 'mobile' | 'qr'>('manual');
   const [manualAddress, setManualAddress] = useState('');
-  const [isValidAddress, setIsValidAddress] = useState(false);
-  const [connectionRequest, setConnectionRequest] = useState<string | null>(null);
-  const [showQR, setShowQR] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<typeof walletApps[0] | null>(null);
-  
+  const [showQRInstructions, setShowQRInstructions] = useState(false);
+  const [connectionRequest, setConnectionRequest] = useState<string | null>(null);
+  const [mobile, setMobile] = useState(false);
+
   // MeshSDK hooks
   const wallets = useWalletList();
   const { connect, connected, wallet: meshWallet, disconnect } = useWallet();
 
-  // デフォルトタブをモバイルかどうかで決定
   useEffect(() => {
-    if (isMobile()) {
-      setActiveTab('mobile');
+    setMobile(isMobile());
+    
+    // ウォレット検出
+    const detected = [];
+    if (typeof window !== 'undefined' && window.cardano) {
+      if (window.cardano.nami) detected.push({ name: 'Nami', icon: '🦎', api: window.cardano.nami });
+      if (window.cardano.yoroi) detected.push({ name: 'Yoroi', icon: '🌸', api: window.cardano.yoroi });
+      if (window.cardano.eternl) detected.push({ name: 'Eternl', icon: '⚡', api: window.cardano.eternl });
+      if (window.cardano.ccvault) detected.push({ name: 'Tokeo', icon: '🚀', api: window.cardano.ccvault });
     }
+    setDetectedWallets(detected);
   }, []);
 
-  // アドレス検証
+  // 自動復元の試行
   useEffect(() => {
-    setIsValidAddress(validateCardanoAddress(manualAddress));
-  }, [manualAddress]);
-
-  // 接続リクエストIDを生成
-  const generateConnectionRequest = () => {
-    const requestId = Math.random().toString(36).substring(7);
-    const timestamp = Date.now();
-    const requestData = {
-      id: requestId,
-      timestamp,
-      origin: window.location.origin,
-      type: 'cardano_address_request'
-    };
-    return JSON.stringify(requestData);
-  };
-
-  // ディープリンクでウォレットアプリを開く
-  const openWalletApp = (walletApp: typeof walletApps[0]) => {
-    const request = generateConnectionRequest();
-    setConnectionRequest(request);
-    setSelectedWallet(walletApp);
-    
-    // ディープリンクを構築
-    const deepLink = `${walletApp.scheme}connect?request=${encodeURIComponent(request)}`;
-    
-    try {
-      // アプリを開く試行
-      window.location.href = deepLink;
-      
-      // 2秒後にストアにリダイレクト（アプリがない場合）
-      setTimeout(() => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const storeUrl = isIOS ? walletApp.storeLinks.ios : walletApp.storeLinks.android;
-        // window.open(storeUrl, '_blank');
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to open wallet app:', err);
-      setConnectionError('ウォレットアプリを開けませんでした。アプリがインストールされているか確認してください。');
-    }
-  };
-
-  // QRコード表示切り替え
-  const showQRCode = (walletApp: typeof walletApps[0]) => {
-    const request = generateConnectionRequest();
-    setConnectionRequest(request);
-    setSelectedWallet(walletApp);
-    setShowQR(true);
-  };
-
-  // URLからアドレスを受信（リダイレクト時）
-  useEffect(() => {
-    const handleURLParams = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const address = urlParams.get('address');
-      const requestId = urlParams.get('request_id');
-      
-      if (address && requestId) {
-        console.log('Received address from wallet app:', address);
-        setManualAddress(address);
-        if (validateCardanoAddress(address)) {
-          handleManualConnect(address);
-        }
-        // URLをクリーン
-        window.history.replaceState({}, document.title, window.location.pathname);
-      }
-    };
-    
-    handleURLParams();
-  }, []);
-
-  // 自動接続の試行
-  useEffect(() => {
-    const tryConnect = async () => {
+    const tryAutoRestore = async () => {
       try {
-        const saved = localStorage.getItem('wallet');
         const savedAddress = localStorage.getItem('manualWalletAddress');
+        const savedWallet = localStorage.getItem('wallet');
         
         if (savedAddress && !wallet) {
           console.log('Restoring manual wallet address:', savedAddress);
           await verifyWallet(savedAddress);
+          setConnectionStep('success');
           return;
         }
         
-        if (!connected && saved && window.cardano && window.cardano[saved]) {
-          console.log('Attempting to reconnect wallet:', saved);
-          setConnectInProgress(true);
-          
+        if (!connected && savedWallet && detectedWallets.some(w => w.name.toLowerCase() === savedWallet)) {
+          console.log('Attempting to reconnect wallet:', savedWallet);
+          setConnectionStep('connecting');
           try {
-            const api = await window.cardano[saved].enable({ 
-              extensions: [{cip: 95}, {cip: 104}] 
-            });
-            await connect(saved, api);
+            await connect(savedWallet);
+            setConnectionStep('success');
           } catch (enableError) {
-            console.error('Wallet enable error:', enableError);
+            console.error('Auto reconnect failed:', enableError);
             localStorage.removeItem('wallet');
-          } finally {
-            setConnectInProgress(false);
+            setConnectionStep('auto');
           }
         }
       } catch (err) {
-        console.error('Auto-reconnect failed:', err);
-        setConnectInProgress(false);
+        console.error('Auto-restore failed:', err);
+        setConnectionStep('auto');
       }
     };
     
-    if (!wallet) {
-      tryConnect();
+    if (!wallet && detectedWallets.length > 0) {
+      tryAutoRestore();
     }
-  }, [connected, connect, verifyWallet, wallet]);
+  }, [detectedWallets, connected, connect, verifyWallet, wallet]);
 
-  // 拡張機能ウォレットアドレス検証
+  // MeshSDKウォレット接続時の検証
   useEffect(() => {
-    const verifyAddress = async () => {
+    const verifyMeshWallet = async () => {
       try {
         if (connected && meshWallet && meshWallet.address && !wallet) {
-          console.log('Verifying wallet address:', meshWallet.address);
+          console.log('Verifying mesh wallet address:', meshWallet.address);
+          setConnectionStep('connecting');
           const success = await verifyWallet(meshWallet.address);
           if (success) {
             localStorage.removeItem('manualWalletAddress');
+            setConnectionStep('success');
+          } else {
+            setConnectionError('ウォレット検証に失敗しました');
+            setConnectionStep('auto');
           }
         }
       } catch (err) {
-        console.error('Wallet verification error:', err);
+        console.error('Mesh wallet verification error:', err);
         setConnectionError('ウォレット検証中にエラーが発生しました');
+        setConnectionStep('auto');
       }
     };
     
-    verifyAddress();
+    verifyMeshWallet();
   }, [connected, meshWallet, verifyWallet, wallet]);
 
-  // 拡張機能ウォレット接続
-  const handleExtensionConnect = async () => {
+  // 自動接続の試行
+  const handleAutoConnect = async () => {
+    setConnectionError(null);
+    setConnectionStep('connecting');
+    
     try {
-      setConnectionError(null);
-      setConnectInProgress(true);
-      
-      if (!window.cardano) {
-        setConnectionError('拡張機能が見つかりません。手動入力をお試しください。');
-        setActiveTab('manual');
-        return;
-      }
-      
-      if (wallets.length > 0) {
-        const name = wallets[0].name;
-        await connect(name);
-        localStorage.setItem('wallet', name);
+      if (detectedWallets.length === 1) {
+        // 1つだけ検出された場合は自動接続
+        const walletName = detectedWallets[0].name;
+        await connect(walletName);
+        localStorage.setItem('wallet', walletName);
+        localStorage.removeItem('manualWalletAddress');
+      } else if (detectedWallets.length > 1) {
+        // 複数ある場合は最初のウォレットで試行
+        const walletName = detectedWallets[0].name;
+        await connect(walletName);
+        localStorage.setItem('wallet', walletName);
         localStorage.removeItem('manualWalletAddress');
       } else {
-        setConnectionError('利用可能なウォレットが見つかりません');
+        // 検出されない場合は手動選択へ
+        setConnectionStep('manual');
+        return;
       }
     } catch (err) {
-      console.error('Wallet connection error:', err);
-      setConnectionError(err instanceof Error ? err.message : 'ウォレット接続中にエラーが発生しました');
-    } finally {
-      setConnectInProgress(false);
+      console.error('Auto connect failed:', err);
+      setConnectionError('自動接続に失敗しました');
+      setConnectionStep('manual');
+    }
+  };
+
+  // 手動ウォレット接続
+  const handleWalletConnect = async (walletName: string) => {
+    setConnectionError(null);
+    setConnectionStep('connecting');
+    
+    try {
+      await connect(walletName);
+      localStorage.setItem('wallet', walletName);
+      localStorage.removeItem('manualWalletAddress');
+    } catch (err) {
+      console.error('Manual wallet connect failed:', err);
+      setConnectionError(`${walletName}の接続に失敗しました`);
+      setConnectionStep('manual');
     }
   };
 
   // 手動アドレス入力で接続
-  const handleManualConnect = async (address?: string) => {
-    const addressToVerify = address || manualAddress;
-    
-    if (!validateCardanoAddress(addressToVerify)) {
+  const handleManualAddressConnect = async () => {
+    if (!validateCardanoAddress(manualAddress)) {
       setConnectionError('有効なCardanoアドレスを入力してください');
       return;
     }
 
+    setConnectionError(null);
+    setConnectionStep('connecting');
+    
     try {
-      setConnectionError(null);
-      setConnectInProgress(true);
-      
-      console.log('Verifying manual wallet address:', addressToVerify);
-      const success = await verifyWallet(addressToVerify);
-      
+      const success = await verifyWallet(manualAddress);
       if (success) {
-        localStorage.setItem('manualWalletAddress', addressToVerify);
+        localStorage.setItem('manualWalletAddress', manualAddress);
         localStorage.removeItem('wallet');
-        setShowQR(false);
-        console.log('Manual wallet verified successfully');
+        setConnectionStep('success');
       } else {
         setConnectionError('アドレスの検証に失敗しました');
+        setConnectionStep('manual');
       }
     } catch (err) {
-      console.error('Manual wallet verification error:', err);
+      console.error('Manual address verification error:', err);
       setConnectionError('アドレス検証中にエラーが発生しました');
-    } finally {
-      setConnectInProgress(false);
+      setConnectionStep('manual');
     }
+  };
+
+  // QRコード表示
+  const showQRCode = (walletApp?: typeof walletApps[0]) => {
+    const request = Math.random().toString(36).substring(7);
+    setConnectionRequest(request);
+    if (walletApp) {
+      setSelectedWallet(walletApp);
+    }
+    setConnectionStep('qr');
+    setShowQRInstructions(true);
   };
 
   // ウォレット切断
@@ -285,8 +253,7 @@ export default function WalletConnection() {
       }
       localStorage.removeItem('manualWalletAddress');
       setManualAddress('');
-      setShowQR(false);
-      setConnectionRequest(null);
+      setConnectionStep('auto');
       console.log('Wallet disconnected successfully');
     } catch (err) {
       console.error('Wallet disconnect error:', err);
@@ -294,8 +261,63 @@ export default function WalletConnection() {
     }
   };
 
-  // QRコードダイアログ
-  if (showQR && connectionRequest && selectedWallet) {
+  // 接続成功時
+  if (wallet) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md"
+      >
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-gray-800 mb-2">接続完了！</h2>
+              <p className="text-gray-600 mb-4">
+                ウォレットアドレス: {truncateAddress(wallet)}
+              </p>
+              <Button
+                onClick={handleDisconnect}
+                variant="outline"
+                size="sm"
+                className="mb-4"
+              >
+                ウォレットを変更
+              </Button>
+            </div>
+          </CardContent>
+          <CardFooter className="text-xs text-slate-500 justify-center">
+            🎯 アドレス収集目的：投票参加者にNFTを配布します
+          </CardFooter>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // 接続中
+  if (connectionStep === 'connecting') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="w-full max-w-md"
+      >
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-gray-800 mb-2">接続中...</h2>
+              <p className="text-gray-600">ウォレットからの承認をお待ちください</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
+  // QRコード表示
+  if (connectionStep === 'qr') {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -305,56 +327,74 @@ export default function WalletConnection() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <QrCode size={24} className="text-blue-600 mr-2" />
-                <CardTitle>{selectedWallet.name}で接続</CardTitle>
-              </div>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={() => setShowQR(false)}
+                onClick={() => setConnectionStep('auto')}
+                className="p-1"
               >
-                戻る
+                <ArrowLeft className="w-4 h-4" />
               </Button>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="w-5 h-5" />
+                QRコード接続
+              </CardTitle>
+              <div className="w-8" />
             </div>
-            <CardDescription>
-              QRコードをスキャンして接続してください
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-center p-4 bg-white rounded-lg">
+            <div className="bg-white p-4 rounded-lg border-2 border-gray-100 flex justify-center">
               <QRCode
-                value={connectionRequest}
+                value={connectionRequest || window.location.href}
                 size={200}
                 level="M"
               />
             </div>
-            
-            <div className="text-center space-y-3">
-              <p className="text-sm text-slate-600">
-                {selectedWallet.name}アプリでQRコードをスキャンしてください
-              </p>
-              
-              <div className="space-y-2">
+
+            {showQRInstructions && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <h4 className="font-medium text-blue-900 mb-2">📱 スマホでの接続方法</h4>
+                    <ol className="space-y-1 text-blue-800">
+                      <li>1️⃣ ウォレットアプリを起動</li>
+                      <li>2️⃣ 「スキャン」または「QRコード」を選択</li>
+                      <li>3️⃣ 上のQRコードを読み取り</li>
+                      <li>4️⃣ アプリの指示に従って接続</li>
+                    </ol>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+              {walletApps.map((walletApp) => (
                 <Button
-                  onClick={() => openWalletApp(selectedWallet)}
-                  className="w-full"
-                  size="sm"
-                >
-                  <ExternalLink size={16} className="mr-2" />
-                  {selectedWallet.name}アプリを開く
-                </Button>
-                
-                <Button
-                  onClick={() => navigator.clipboard.writeText(connectionRequest)}
+                  key={walletApp.name}
+                  onClick={() => setSelectedWallet(walletApp)}
                   variant="outline"
-                  className="w-full"
-                  size="sm"
+                  className="p-3 h-auto flex flex-col items-center gap-1"
                 >
-                  <Copy size={16} className="mr-2" />
-                  接続データをコピー
+                  <span className="text-lg">{walletApp.icon}</span>
+                  <span className="text-xs">{walletApp.name}</span>
                 </Button>
-              </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Button
+                onClick={() => setConnectionStep('manual')}
+                variant="link"
+                size="sm"
+                className="text-gray-500"
+              >
+                手動入力に戻る
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -362,6 +402,7 @@ export default function WalletConnection() {
     );
   }
 
+  // メイン接続画面
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -371,203 +412,160 @@ export default function WalletConnection() {
     >
       <Card>
         <CardHeader>
-          <div className="flex items-center mb-2">
-            <WalletIcon size={24} className="text-blue-600 mr-2" />
+          <div className="text-center">
+            <WalletIcon className="w-12 h-12 text-blue-600 mx-auto mb-3" />
             <CardTitle>ウォレットを接続</CardTitle>
+            <CardDescription>
+              投票に参加するためにCardanoウォレットアドレスが必要です
+            </CardDescription>
           </div>
-          <CardDescription>
-            投票に参加するためにCardanoウォレットアドレスが必要です。
-          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
-              <p className="font-medium">エラー:</p>
-              <p>{error}</p>
-            </div>
-          )}
-
-          {connectionError && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
-              <p className="font-medium">接続エラー:</p>
-              <p>{connectionError}</p>
-            </div>
-          )}
-
-          {wallet ? (
-            <div className="space-y-3">
-              <div className="p-4 bg-green-50 rounded-md">
-                <div className="flex items-center text-sm text-green-700">
-                  <CheckCircle size={16} className="mr-2" />
-                  <span>
-                    <span className="font-medium">接続済み: </span>
-                    {truncateAddress(wallet)}
-                  </span>
-                </div>
+          {(error || connectionError) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-sm"
+            >
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                <span>{error || connectionError}</span>
               </div>
-              
-              <Button 
-                onClick={handleDisconnect}
-                variant="outline"
-                size="sm"
-                className="w-full text-slate-600"
-                isLoading={isLoading || connectInProgress}
+            </motion.div>
+          )}
+
+          <AnimatePresence mode="wait">
+            {connectionStep === 'auto' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
               >
-                ウォレットを切断
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {/* タブ選択 */}
-              <div className="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-md">
-                <button
-                  onClick={() => setActiveTab('manual')}
-                  className={`flex-1 flex items-center justify-center py-2 px-2 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'manual' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
+                {/* ワンクリック接続（最優先） */}
+                <Button
+                  onClick={handleAutoConnect}
+                  className="w-full py-4 text-lg font-medium"
+                  size="lg"
+                  disabled={isLoading}
                 >
-                  <Edit3 size={14} className="mr-1" />
-                  手動入力
-                </button>
-                <button
-                  onClick={() => setActiveTab('mobile')}
-                  className={`flex-1 flex items-center justify-center py-2 px-2 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'mobile' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <Smartphone size={14} className="mr-1" />
-                  アプリ連携
-                </button>
-                <button
-                  onClick={() => setActiveTab('extension')}
-                  className={`flex-1 flex items-center justify-center py-2 px-2 rounded text-xs font-medium transition-colors ${
-                    activeTab === 'extension' 
-                      ? 'bg-white text-blue-600 shadow-sm' 
-                      : 'text-slate-600 hover:text-slate-900'
-                  }`}
-                >
-                  <WalletIcon size={14} className="mr-1" />
-                  拡張機能
-                </button>
-              </div>
+                  <WalletIcon className="w-5 h-5 mr-3" />
+                  ワンクリック接続（推奨）
+                </Button>
 
-              {/* 手動入力タブ */}
-              {activeTab === 'manual' && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Cardanoウォレットアドレス
-                    </label>
-                    <input
-                      type="text"
-                      value={manualAddress}
-                      onChange={(e) => setManualAddress(e.target.value)}
-                      placeholder="addr1..."
-                      className={`w-full px-3 py-2 border rounded-md text-sm ${
-                        manualAddress && !isValidAddress 
-                          ? 'border-red-300 focus:border-red-500' 
-                          : 'border-slate-300 focus:border-blue-500'
-                      } focus:outline-none focus:ring-1`}
-                    />
-                    {manualAddress && !isValidAddress && (
-                      <p className="text-red-500 text-xs mt-1">有効なCardanoアドレスを入力してください</p>
-                    )}
+                {detectedWallets.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-center text-gray-600"
+                  >
+                    検出されたウォレット: {detectedWallets.map(w => `${w.icon} ${w.name}`).join(', ')}
+                  </motion.div>
+                )}
+
+                {/* その他の方法 */}
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-500 text-center mb-3">うまくいかない場合</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      onClick={() => setConnectionStep('manual')}
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 py-3"
+                    >
+                      <Monitor className="w-4 h-4" />
+                      手動選択
+                    </Button>
+                    <Button
+                      onClick={() => showQRCode()}
+                      variant="outline"
+                      className="flex items-center justify-center gap-2 py-3"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      QRコード
+                    </Button>
                   </div>
-                  <Button 
-                    onClick={() => handleManualConnect()}
+                </div>
+              </motion.div>
+            )}
+
+            {connectionStep === 'manual' && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setConnectionStep('auto')}
+                    className="p-1"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                  <h3 className="font-medium">手動接続</h3>
+                </div>
+
+                {/* 検出されたウォレット */}
+                {detectedWallets.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-700">ブラウザ拡張機能</p>
+                    {detectedWallets.map((detectedWallet) => (
+                      <Button
+                        key={detectedWallet.name}
+                        onClick={() => handleWalletConnect(detectedWallet.name)}
+                        variant="outline"
+                        className="w-full flex items-center justify-between p-4"
+                        disabled={isLoading}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{detectedWallet.icon}</span>
+                          <span>{detectedWallet.name}</span>
+                        </div>
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </Button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 手動アドレス入力 */}
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700">アドレス直接入力</p>
+                  <input
+                    type="text"
+                    value={manualAddress}
+                    onChange={(e) => setManualAddress(e.target.value)}
+                    placeholder="addr1..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                  <Button
+                    onClick={handleManualAddressConnect}
                     className="w-full"
-                    disabled={!isValidAddress}
-                    isLoading={isLoading || connectInProgress}
+                    disabled={!validateCardanoAddress(manualAddress) || isLoading}
                   >
                     アドレスで接続
                   </Button>
-                  <p className="text-xs text-slate-500">
-                    ウォレットアプリからアドレスをコピーして貼り付けてください
-                  </p>
                 </div>
-              )}
 
-              {/* モバイルアプリ連携タブ */}
-              {activeTab === 'mobile' && (
-                <div className="space-y-3">
-                  <div className="bg-blue-50 p-3 rounded-md text-sm">
-                    <div className="flex items-center mb-2">
-                      <Smartphone size={16} className="text-blue-600 mr-2" />
-                      <p className="font-medium text-blue-800">🚀 ワンタップ接続</p>
-                    </div>
-                    <p className="text-blue-700 mb-3">
-                      ウォレットアプリに直接接続してコピペ不要で投票参加！
-                    </p>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    {walletApps.map((walletApp) => (
-                      <div key={walletApp.name} className="space-y-2">
-                        <Button
-                          onClick={() => openWalletApp(walletApp)}
-                          variant="outline"
-                          className="w-full text-xs"
-                          size="sm"
-                        >
-                          <ExternalLink size={14} className="mr-1" />
-                          {walletApp.name}
-                        </Button>
-                        <Button
-                          onClick={() => showQRCode(walletApp)}
-                          variant="outline"
-                          className="w-full text-xs"
-                          size="sm"
-                        >
-                          <QrCode size={14} className="mr-1" />
-                          QR
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="text-xs text-slate-500 text-center">
-                    アプリが開かない場合は手動入力をお試しください
-                  </div>
+                {/* QRコードボタン */}
+                <div className="text-center">
+                  <Button
+                    onClick={() => showQRCode()}
+                    variant="link"
+                    size="sm"
+                    className="text-blue-600"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    QRコードを表示
+                  </Button>
                 </div>
-              )}
-
-              {/* 拡張機能タブ */}
-              {activeTab === 'extension' && (
-                <div className="space-y-3">
-                  {typeof window !== 'undefined' && window.cardano && wallets.length > 0 ? (
-                    <Button 
-                      onClick={handleExtensionConnect}
-                      className="w-full"
-                      isLoading={isLoading || connectInProgress}
-                    >
-                      <WalletIcon size={18} className="mr-2" />
-                      ウォレット拡張機能で接続
-                    </Button>
-                  ) : (
-                    <div className="bg-amber-50 p-4 rounded-md text-sm">
-                      <p className="font-medium mb-2">拡張機能ウォレット:</p>
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li><a href="https://namiwallet.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Nami</a></li>
-                        <li><a href="https://flint-wallet.com/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Flint</a></li>
-                        <li><a href="https://eternl.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Eternl</a></li>
-                        <li><a href="https://tokeo.io/" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Tokeo</a></li>
-                      </ul>
-                      <p className="mt-2 text-slate-600">
-                        インストール後にページを再読み込みするか、手動入力をお試しください。
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
         <CardFooter className="text-xs text-slate-500 justify-center">
-          📝 アドレス収集目的：投票参加者にNFTを配布します
+          🎯 アドレス収集目的：投票参加者にNFTを配布します
         </CardFooter>
       </Card>
     </motion.div>
