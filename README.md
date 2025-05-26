@@ -1,17 +1,17 @@
 # touhyou
 
-## Setup
-
-# touhyou
-
 ウォレット認証投票システム - Cardanoブロックチェーンを使った分散型投票アプリケーション
 
 ## 🚀 主な機能
 
-- 🔐 Cardanoウォレット認証による本人確認
+- 🔐 **柔軟なウォレット認証システム**
+  - ブラウザ拡張機能による自動接続
+  - 手動でのアドレス入力
+  - スマホアプリ対応
 - 📊 リアルタイム投票・結果表示
 - 🎨 モダンUI（React + TypeScript + TailwindCSS）
 - 🔄 重複投票防止システム
+- 📱 **モバイルフレンドリー設計**
 
 ## 🛠️ 技術スタック
 
@@ -21,21 +21,47 @@
 - **スタイリング**: TailwindCSS, Framer Motion
 - **状態管理**: Zustand
 
-## 💼 対応ウォレット
+## 💼 ウォレット接続方法
 
-以下のCardanoウォレットに対応しています：
+### 🖥️ PCでの利用（ブラウザ拡張機能）
+
+以下のブラウザ拡張機能をインストールして自動接続できます：
 
 - [Nami](https://namiwallet.io/)
 - [Flint](https://flint-wallet.com/)
 - [Eternl](https://eternl.io/)
 - [Tokeo](https://tokeo.io/)
 
+### 📱 スマホでの利用（手動アドレス入力）
+
+スマホアプリからウォレットアドレスをコピーして投票に参加できます：
+
+- [Yoroi Wallet](https://yoroi-wallet.com/) - iOS/Android
+- [Nami Mobile](https://namiwallet.io/) - モバイルブラウザ
+- [Eternl Mobile](https://eternl.io/) - iOS/Android
+
+### ✍️ 手動アドレス入力の手順
+
+1. ウォレットアプリを開く
+2. 受信アドレス（Receiving Address）をコピー
+3. 投票アプリの「手動入力」タブに貼り付け
+4. 「アドレスで接続」をクリック
+
+## 🎯 プロジェクトの目的
+
+このアプリケーションは以下の目的で開発されています：
+
+- **アドレス収集**: 投票参加者のCardanoアドレスを収集
+- **NFT配布**: 投票参加者にNFTを配布予定
+- **ユーザー体験**: より多くの人にCardano投票システムを体験してもらう
+- **アクセシビリティ**: 拡張機能なしでもスマホからアクセス可能
+
 ## 📋 必要な環境
 
 - Node.js 18+ 
 - npm または yarn
 - Supabaseアカウント
-- 対応Cardanoウォレット（上記のいずれか）
+- Cardanoウォレット（アプリまたは拡張機能）
 
 ## ⚡ セットアップ手順
 
@@ -62,6 +88,12 @@ yarn install
 cp .env.example .env
 ```
 
+必要な環境変数：
+```
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
 ### 4. 開発サーバーの起動
 
 ```bash
@@ -81,10 +113,28 @@ yarn dev
 
 ## 📝 使用方法
 
-1. 対応ウォレット（Nami、Flint、Eternl、Tokeo）をブラウザにインストール
-2. アプリケーションにアクセス
-3. ウォレットを接続して本人確認
+### PCユーザー
+1. 対応ウォレット拡張機能をインストール
+2. 「拡張機能」タブでウォレットを接続
+3. 投票に参加
+
+### スマホユーザー
+1. Cardanoウォレットアプリをダウンロード
+2. ウォレットを作成してアドレスを取得
+3. 「手動入力」タブでアドレスを入力
 4. 投票に参加
+
+### 拡張機能なしのユーザー
+1. 「手動入力」タブを選択
+2. 既存のCardanoアドレスを入力
+3. 投票に参加
+
+## 🔒 セキュリティについて
+
+- アドレス入力のみで投票可能（秘密鍵は不要）
+- 基本的なCardanoアドレス形式の検証
+- 重複投票防止システム
+- ローカルストレージでの設定保存
 
 ## 🤝 コントリビューション
 
@@ -93,3 +143,8 @@ yarn dev
 ## 📄 ライセンス
 
 MIT License
+
+## 📞 サポート
+
+- [GitHub Issues](https://github.com/crackerky/touhyou/issues)
+- Cardanoアドレス形式: `addr1...` で始まるBech32形式を推奨
