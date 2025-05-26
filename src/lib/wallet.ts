@@ -2,17 +2,16 @@
  * Wallet utility functions with fallbacks for missing WebAssembly dependencies
  */
 
+import { isHexAddress, isCardanoAddressFormatValid } from './utils';
+
 const WASM_SUPPORTED = typeof WebAssembly !== 'undefined';
 
 // Mock implementation for systems without WebAssembly support
 const mockCardanoApi = {
   isValidAddress: (address: string) => {
     console.warn('Using mock Cardano validation - WASM not available');
-    // Simple regex validation as fallback
-    return /^addr1[a-zA-Z0-9]{58,98}$/.test(address) || 
-           /^addr_test1[a-zA-Z0-9]{58,98}$/.test(address) ||
-           /^Ae2[a-zA-Z0-9]{56,58}$/.test(address) ||
-           /^DdzFF[a-zA-Z0-9]{90,110}$/.test(address);
+    // Updated to support both Hex and Bech32 formats
+    return isCardanoAddressFormatValid(address);
   }
 };
 
@@ -61,17 +60,23 @@ export const initCardanoLib = async (): Promise<boolean> => {
   return false;
 };
 
-// Validate a Cardano address
+// Validate a Cardano address (supports both Hex and Bech32)
 export const isValidCardanoAddress = async (address: string): Promise<boolean> => {
-  // Always use the regex-based validation first as a fast path
-  if (!mockCardanoApi.isValidAddress(address)) {
+  // Always use the enhanced regex-based validation first as a fast path
+  if (!isCardanoAddressFormatValid(address)) {
     return false;
   }
   
-  // If we already have the lib or can load it, use it for detailed validation
+  // For Hex addresses, the format validation is sufficient for now
+  if (isHexAddress(address)) {
+    console.log('Hex address detected, using format validation');
+    return true;
+  }
+  
+  // If we already have the lib or can load it, use it for detailed Bech32 validation
   if (cardanoLibAvailable || await initCardanoLib()) {
     try {
-      // Use the actual library for validation if available
+      // Use the actual library for Bech32 validation if available
       return cardanoLib.Address.from_bech32(address) !== null;
     } catch (error) {
       // If the address isn't valid bech32, try legacy validation
@@ -108,9 +113,31 @@ export const getAvailableWallets = (): string[] => {
   );
 };
 
+// Convert Hex address to Bech32 (with proper error handling)
+export const convertHexToBech32 = async (hexAddress: string): Promise<string> => {
+  if (!isHexAddress(hexAddress)) {
+    throw new Error('Invalid hex address format');
+  }
+  
+  try {
+    if (cardanoLibAvailable || await initCardanoLib()) {
+      const addressBytes = Buffer.from(hexAddress, 'hex');
+      const address = cardanoLib.Address.from_bytes(addressBytes);
+      return address.to_bech32();
+    } else {
+      console.warn('Cardano library not available, returning hex address');
+      return hexAddress;
+    }
+  } catch (error) {
+    console.error('Failed to convert hex to bech32:', error);
+    throw new Error('Address conversion failed');
+  }
+};
+
 export default {
   initCardanoLib,
   isValidCardanoAddress,
   isCardanoWalletAvailable,
-  getAvailableWallets
+  getAvailableWallets,
+  convertHexToBech32
 };
