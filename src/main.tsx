@@ -55,7 +55,17 @@ const initApp = () => {
   } else {
     ReactDOM.createRoot(rootElement).render(
       <StrictMode>
-        <ErrorBoundary>
+        <ErrorBoundary
+          onError={(error, errorInfo) => {
+            console.error('Application error:', error, errorInfo);
+            analytics.track('application_error', {
+              error: error.message,
+              stack: error.stack,
+              componentStack: errorInfo.componentStack,
+              timestamp: new Date().toISOString()
+            });
+          }}
+        >
           <MeshProvider>
             <App />
           </MeshProvider>
