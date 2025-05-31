@@ -4,8 +4,7 @@ import './polyfills';
 import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { MeshProvider } from '@meshsdk/react';
-import { ErrorBoundary } from 'react-error-boundary';
-import ErrorFallback from './components/ErrorFallback';
+import ErrorBoundary from './ErrorBoundary';
 import App from './App.tsx';
 import './index.css';
 import { initCardanoLib } from './lib/wallet';
@@ -56,18 +55,7 @@ const initApp = () => {
   } else {
     ReactDOM.createRoot(rootElement).render(
       <StrictMode>
-        <ErrorBoundary
-          FallbackComponent={ErrorFallback}
-          onError={(error, errorInfo) => {
-            console.error('Application error:', error, errorInfo);
-            analytics.track('application_error', {
-              error: error.message,
-              stack: error.stack,
-              componentStack: errorInfo.componentStack,
-              timestamp: new Date().toISOString()
-            });
-          }}
-        >
+        <ErrorBoundary>
           <MeshProvider>
             <App />
           </MeshProvider>
