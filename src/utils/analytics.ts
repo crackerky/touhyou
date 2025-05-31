@@ -139,8 +139,8 @@ class VotingAnalytics {
     });
   }
 
-  // 汎用トラッキング
-  private track(event: string, data: Record<string, any>): void {
+  // 汎用トラッキング（publicメソッド）
+  track(event: string, data: Record<string, any> = {}): void {
     const analyticsEvent: AnalyticsEvent = {
       event,
       timestamp: new Date().toISOString(),
@@ -148,7 +148,8 @@ class VotingAnalytics {
         ...data,
         userAgent: navigator.userAgent,
         url: window.location.href,
-        referrer: document.referrer
+        referrer: document.referrer,
+        sessionId: this.sessionId
       }
     };
 
@@ -202,6 +203,16 @@ class VotingAnalytics {
   clearEvents(): void {
     this.events = [];
     localStorage.removeItem('voting_analytics');
+  }
+
+  // 現在のセッションID取得
+  getSessionId(): string {
+    return this.sessionId;
+  }
+
+  // 最新イベント取得
+  getRecentEvents(limit: number = 10): AnalyticsEvent[] {
+    return this.events.slice(-limit);
   }
 }
 
