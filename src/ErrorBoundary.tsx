@@ -3,6 +3,7 @@ import React, { Component, ReactNode } from 'react';
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
@@ -24,6 +25,15 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
     this.setState({ errorInfo });
+    
+    // onErrorコールバックがあれば呼び出す
+    if (this.props.onError) {
+      this.props.onError(error, errorInfo);
+    }
+  }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   }
 
   render() {
@@ -50,12 +60,20 @@ class ErrorBoundary extends Component<Props, State> {
                 </details>
               )}
             </div>
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-            >
-              ページを再読み込み
-            </button>
+            <div className="flex gap-2 mt-4">
+              <button 
+                onClick={this.handleReset}
+                className="flex-1 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors"
+              >
+                再試行
+              </button>
+              <button 
+                onClick={() => window.location.reload()}
+                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+              >
+                再読み込み
+              </button>
+            </div>
           </div>
         </div>
       );
