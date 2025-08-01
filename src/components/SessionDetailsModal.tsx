@@ -159,70 +159,72 @@ export function SessionDetailsModal({ sessionId, onClose }: SessionDetailsModalP
 
         <div className="p-6 space-y-6">
           {activeTab === 'info' && (
-          {/* Session Info */}
-          <div>
-            <h3 className="text-lg font-medium mb-3">投票情報</h3>
-            <Card className="p-4 space-y-2">
-              {currentSession.description && (
-                <p className="text-gray-700">{currentSession.description}</p>
-              )}
-              <div className="flex items-center gap-4 text-sm text-gray-600">
-                <span>
-                  作成日: {format(new Date(currentSession.created_at), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
-                </span>
-                {currentSession.end_date && (
-                  <span>
-                    終了日: {format(new Date(currentSession.end_date), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
-                  </span>
-                )}
+            <>
+              {/* Session Info */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">投票情報</h3>
+                <Card className="p-4 space-y-2">
+                  {currentSession.description && (
+                    <p className="text-gray-700">{currentSession.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>
+                      作成日: {format(new Date(currentSession.created_at), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
+                    </span>
+                    {currentSession.end_date && (
+                      <span>
+                        終了日: {format(new Date(currentSession.end_date), 'yyyy年MM月dd日 HH:mm', { locale: ja })}
+                      </span>
+                    )}
+                  </div>
+                  {currentSession.nft_policy_id && (
+                    <div className="text-sm text-gray-600">
+                      NFT Policy ID: {currentSession.nft_policy_id}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 pt-2">
+                    {currentSession.is_active ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        アクティブ
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-gray-500">
+                        <XCircle className="h-4 w-4" />
+                        終了
+                      </span>
+                    )}
+                  </div>
+                </Card>
               </div>
-              {currentSession.nft_policy_id && (
-                <div className="text-sm text-gray-600">
-                  NFT Policy ID: {currentSession.nft_policy_id}
-                </div>
-              )}
-              <div className="flex items-center gap-2 pt-2">
-                {currentSession.is_active ? (
-                  <span className="flex items-center gap-1 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    アクティブ
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 text-gray-500">
-                    <XCircle className="h-4 w-4" />
-                    終了
-                  </span>
-                )}
-              </div>
-            </Card>
-          </div>
 
-          {/* Share Link */}
-          <div>
-            <h3 className="text-lg font-medium mb-3">投票リンク</h3>
-            <Card className="p-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={`${window.location.origin}/vote/${sessionId}`}
-                  readOnly
-                  className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm"
-                />
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/vote/${sessionId}`);
-                  }}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  コピー
-                </Button>
+              {/* Share Link */}
+              <div>
+                <h3 className="text-lg font-medium mb-3">投票リンク</h3>
+                <Card className="p-4">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={`${window.location.origin}/vote/${sessionId}`}
+                      readOnly
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${window.location.origin}/vote/${sessionId}`);
+                      }}
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      コピー
+                    </Button>
+                  </div>
+                  <p className="mt-2 text-xs text-gray-500">
+                    このリンクを共有して投票に参加してもらいましょう
+                  </p>
+                </Card>
               </div>
-              <p className="mt-2 text-xs text-gray-500">
-                このリンクを共有して投票に参加してもらいましょう
-              </p>
-            </Card>
-          </div>
+            </>
           )}
 
           {activeTab === 'results' && (
