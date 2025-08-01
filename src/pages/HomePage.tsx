@@ -50,7 +50,7 @@ export function HomePage() {
               </div>
             ) : (
               <p className="text-gray-600">
-                投票に参加するには、上部のGoogleでログインしてください
+                投票に参加するには、上部のメールアドレスでログインしてください
               </p>
             )}
           </motion.div>
@@ -87,9 +87,9 @@ export function HomePage() {
                 <div className="p-3 bg-green-100 rounded-lg w-fit mb-4">
                   <Users className="h-8 w-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Google認証</h3>
+                <h3 className="text-xl font-semibold mb-3">メール認証</h3>
                 <p className="text-gray-600">
-                  Googleアカウントで簡単ログイン。ウォレットアドレスと安全に紐付け
+                  メールアドレスで簡単ログイン。ウォレットアドレスと安全に紐付け
                 </p>
               </Card>
             </motion.div>

@@ -56,7 +56,7 @@
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
-  google_id TEXT UNIQUE NOT NULL,
+  google_id TEXT UNIQUE,
   wallet_address TEXT UNIQUE,
   display_name TEXT,
   avatar_url TEXT,
@@ -129,12 +129,12 @@ CREATE POLICY "Users can view all profiles"
 
 CREATE POLICY "Users can insert their own profile"
   ON users FOR INSERT
-  WITH CHECK (auth.uid()::text = google_id);
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update their own profile"
   ON users FOR UPDATE
-  USING (auth.uid()::text = google_id)
-  WITH CHECK (auth.uid()::text = google_id);
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
 -- Policies for voting_sessions table
 CREATE POLICY "Anyone can view active voting sessions"
@@ -144,12 +144,12 @@ CREATE POLICY "Anyone can view active voting sessions"
 CREATE POLICY "Authenticated users can create voting sessions"
   ON voting_sessions FOR INSERT
   TO authenticated
-  WITH CHECK (created_by::text = auth.uid()::text);
+  WITH CHECK (created_by = auth.uid());
 
 CREATE POLICY "Users can update their own voting sessions"
   ON voting_sessions FOR UPDATE
-  USING (created_by::text = auth.uid()::text)
-  WITH CHECK (created_by::text = auth.uid()::text);
+  USING (created_by = auth.uid())
+  WITH CHECK (created_by = auth.uid());
 
 -- Policies for session_votes table
 CREATE POLICY "Anyone can view vote results"
@@ -159,23 +159,23 @@ CREATE POLICY "Anyone can view vote results"
 CREATE POLICY "Authenticated users can vote"
   ON session_votes FOR INSERT
   TO authenticated
-  WITH CHECK (user_id::text = auth.uid()::text);
+  WITH CHECK (user_id = auth.uid());
 
 -- Policies for nft_distributions table
 CREATE POLICY "Users can view their own distributions"
   ON nft_distributions FOR SELECT
-  USING (recipient_user_id::text = auth.uid()::text OR 
-         EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by::text = auth.uid()::text));
+  USING (recipient_user_id = auth.uid() OR 
+         EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by = auth.uid()));
 
 CREATE POLICY "Session creators can create distributions"
   ON nft_distributions FOR INSERT
   TO authenticated
-  WITH CHECK (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by::text = auth.uid()::text));
+  WITH CHECK (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by = auth.uid()));
 
 CREATE POLICY "Session creators can update distributions"
   ON nft_distributions FOR UPDATE
-  USING (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by::text = auth.uid()::text))
-  WITH CHECK (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by::text = auth.uid()::text));
+  USING (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM voting_sessions WHERE id = session_id AND created_by = auth.uid()));
 
 -- Create functions for better data management
 CREATE OR REPLACE FUNCTION update_updated_at_column()

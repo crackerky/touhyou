@@ -9,7 +9,8 @@ interface AuthState {
   error: string | null;
   
   // Actions
-  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   checkUser: () => Promise<void>;
   updateUserWallet: (walletAddress: string) => Promise<void>;
@@ -23,27 +24,52 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       error: null,
 
-      signInWithGoogle: async () => {
+      signInWithEmail: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: `${window.location.origin}/auth/callback`,
-              queryParams: {
-                access_type: 'offline',
-                prompt: 'consent',
-              }
-            }
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
           });
 
           if (error) throw error;
 
-          // OAuth redirects to Google, so we don't need to do anything else here
+          // User will be handled by the auth state change listener
+          await get().checkUser();
         } catch (error) {
-          console.error('Google sign in error:', error);
+          console.error('Email sign in error:', error);
           set({ 
-            error: error instanceof Error ? error.message : 'Google認証に失敗しました',
+            error: error instanceof Error ? error.message : 'ログインに失敗しました',
+            isLoading: false 
+          });
+        }
+      },
+
+      signUpWithEmail: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+
+          if (error) throw error;
+
+          if (data.user && !data.user.email_confirmed_at) {
+            set({ 
+              isLoading: false,
+              error: null
+            });
+            // Show message about email confirmation
+            return;
+          }
+
+          // User will be handled by the auth state change listener
+          await get().checkUser();
+        } catch (error) {
+          console.error('Email sign up error:', error);
+          set({ 
+            error: error instanceof Error ? error.message : 'アカウント作成に失敗しました',
             isLoading: false 
           });
         }
@@ -75,7 +101,7 @@ export const useAuthStore = create<AuthState>()(
             const { data: userData, error: userError } = await supabase
               .from('users')
               .select('*')
-              .eq('google_id', authUser.id)
+              .eq('email', authUser.email!)
               .single();
 
             if (userError && userError.code !== 'PGRST116') {
@@ -87,10 +113,11 @@ export const useAuthStore = create<AuthState>()(
               const { data: newUser, error: createError } = await supabase
                 .from('users')
                 .insert({
-                  google_id: authUser.id,
+                  id: authUser.id,
+                  google_id: authUser.app_metadata?.provider === 'google' ? authUser.id : null,
                   email: authUser.email!,
-                  display_name: authUser.user_metadata.full_name || authUser.email!.split('@')[0],
-                  avatar_url: authUser.user_metadata.avatar_url
+                  display_name: authUser.user_metadata?.full_name || authUser.email!.split('@')[0],
+                  avatar_url: authUser.user_metadata?.avatar_url || null
                 })
                 .select()
                 .single();

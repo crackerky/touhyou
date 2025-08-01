@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-ro
 import { Toaster } from 'react-hot-toast';
 import { Home, LayoutDashboard, LogIn } from 'lucide-react';
 import { useAuthStore } from './store/authStore';
-import { GoogleAuth } from './components/GoogleAuth';
+import { EmailAuth } from './components/EmailAuth';
 import { Dashboard } from './components/Dashboard';
 import { VotePage } from './pages/VotePage';
 import { HomePage } from './pages/HomePage';
@@ -53,7 +53,7 @@ function App() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <GoogleAuth />
+                  <EmailAuth />
                 </div>
               </div>
             </div>

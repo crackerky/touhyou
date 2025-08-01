@@ -5,7 +5,7 @@ import { ArrowLeft, Shield, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useVotingSessionStore } from '../store/votingSessionStore';
 import { useNFTVerification } from '../hooks/useNFTVerification';
-import { GoogleAuth } from '../components/GoogleAuth';
+import { EmailAuth } from '../components/EmailAuth';
 import { WalletRegistration } from '../components/WalletRegistration';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
@@ -196,10 +196,10 @@ export function VotePage() {
           <Card className="p-8 text-center">
             <h2 className="text-xl font-semibold mb-4">ログインが必要です</h2>
             <p className="text-gray-600 mb-6">
-              投票に参加するには、Googleアカウントでログインしてください
+              投票に参加するには、メールアドレスでログインしてください
             </p>
             <div className="flex justify-center">
-              <GoogleAuth />
+              <EmailAuth />
             </div>
           </Card>
         ) : !user.wallet_address ? (
