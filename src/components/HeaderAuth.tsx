@@ -56,13 +56,22 @@ export function HeaderAuth() {
 
       {/* Login Modal */}
       {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
+          onClick={(e) => {
+            // モーダル背景をクリックしたときのみ閉じる
+            if (e.target === e.currentTarget) {
+              setShowLoginModal(false);
+            }
+          }}
+        >
           <div className="flex items-center justify-center min-h-screen p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative max-w-md w-full my-8"
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowLoginModal(false)}

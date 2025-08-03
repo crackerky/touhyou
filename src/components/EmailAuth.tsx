@@ -18,6 +18,9 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
   const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'reset'>('signin');
 
+  // デバッグ用ログ
+  console.log('EmailAuth render:', { email, password, isLoading, error, authMode });
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -93,7 +96,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
-      <Card className="p-6">
+      <Card className="p-6 relative z-10">
         <div className="text-center mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {authMode === 'signin' && 'ログイン'}
@@ -115,10 +118,18 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
             <Input
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                console.log('Email input change:', e.target.value);
+                setEmail(e.target.value);
+              }}
+              onFocus={() => console.log('Email input focused')}
+              onBlur={() => console.log('Email input blurred')}
+              onClick={() => console.log('Email input clicked')}
               placeholder="example@email.com"
               required
               disabled={isLoading}
+              autoFocus
+              tabIndex={1}
             />
           </div>
 
@@ -131,10 +142,17 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    console.log('Password input change:', e.target.value);
+                    setPassword(e.target.value);
+                  }}
+                  onFocus={() => console.log('Password input focused')}
+                  onBlur={() => console.log('Password input blurred')}
+                  onClick={() => console.log('Password input clicked')}
                   placeholder="パスワードを入力"
                   required
                   disabled={isLoading}
+                  tabIndex={2}
                 />
                 <button
                   type="button"
