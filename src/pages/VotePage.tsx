@@ -72,10 +72,11 @@ export function VotePage() {
       return;
     }
 
-    if (currentSession?.nft_policy_id && !nftData?.verified) {
-      toast.error('NFT保有確認が必要です');
-      return;
-    }
+    // NFT保有確認は一時的に無効化（テスト用）
+    // if (currentSession?.nft_policy_id && !nftData?.verified) {
+    //   toast.error('NFT保有確認が必要です');
+    //   return;
+    // }
 
     setIsVoting(true);
     try {
@@ -245,7 +246,7 @@ export function VotePage() {
                   
                   <Button
                     onClick={handleVote}
-                    disabled={!selectedOption || isVoting || (currentSession.nft_policy_id && !nftData?.verified)}
+                    disabled={!selectedOption || isVoting}
                     className="w-full bg-blue-600 hover:bg-blue-700"
                   >
                     {isVoting ? '投票中...' : '投票する'}

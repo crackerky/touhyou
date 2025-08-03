@@ -4,16 +4,32 @@ import { Toaster } from 'react-hot-toast';
 import { Home, LayoutDashboard, LogIn } from 'lucide-react';
 import { useAuthStore } from './store/authStore';
 import { EmailAuth } from './components/EmailAuth';
+import { HeaderAuth } from './components/HeaderAuth';
 import { Dashboard } from './components/Dashboard';
 import { VotePage } from './pages/VotePage';
 import { HomePage } from './pages/HomePage';
 import { AuthCallback } from './pages/AuthCallback';
+import { supabase } from './lib/supabase';
 
 function App() {
   const { checkUser, user } = useAuthStore();
 
   useEffect(() => {
     checkUser();
+    
+    // Supabase認証状態のリスナーを設定
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        await checkUser();
+      } else if (event === 'SIGNED_OUT') {
+        await checkUser();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [checkUser]);
 
   return (
@@ -53,7 +69,7 @@ function App() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                  <EmailAuth />
+                  <HeaderAuth />
                 </div>
               </div>
             </div>
@@ -86,7 +102,7 @@ function App() {
               <span>•</span>
               <span>Supabase</span>
               <span>•</span>
-              <span>Google認証対応</span>
+              <span>メール認証対応</span>
             </div>
           </footer>
         </div>

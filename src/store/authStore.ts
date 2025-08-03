@@ -36,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
 
           // User will be handled by the auth state change listener
           await get().checkUser();
+          set({ isLoading: false });
         } catch (error) {
           console.error('Email sign in error:', error);
           set({ 
@@ -66,6 +67,7 @@ export const useAuthStore = create<AuthState>()(
 
           // User will be handled by the auth state change listener
           await get().checkUser();
+          set({ isLoading: false });
         } catch (error) {
           console.error('Email sign up error:', error);
           set({ 

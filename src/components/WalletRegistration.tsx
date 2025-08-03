@@ -62,6 +62,18 @@ export function WalletRegistration() {
     }
   };
 
+  const skipWalletRegistration = async () => {
+    try {
+      // テストモード: ダミーアドレスを使用
+      const dummyAddress = 'addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt6xvxhwvvvxfzkvxz4kvdx0v3sd4sd4s';
+      await updateUserWallet(dummyAddress);
+      toast.success('テストモードで投票が有効になりました');
+    } catch (error) {
+      console.error('Skip registration error:', error);
+      toast.error('エラーが発生しました');
+    }
+  };
+
   if (user?.wallet_address) {
     return (
       <Card className="p-6">
@@ -153,11 +165,38 @@ export function WalletRegistration() {
               </Button>
             </div>
           </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">テストモード</span>
+            </div>
+          </div>
+
+          {/* テストモードオプション */}
+          <div>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              オプション3: テストモードで投票を試す
+            </h4>
+            <Button
+              onClick={skipWalletRegistration}
+              disabled={isLoading}
+              variant="outline"
+              className="w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+            >
+              テストモードで続行
+            </Button>
+            <p className="text-xs text-gray-500 mt-1">
+              ※ NFT確認なしで投票機能をお試しいただけます
+            </p>
+          </div>
         </div>
 
         <div className="mt-4 text-xs text-gray-500">
           <p>※ 登録されたアドレスはNFT保有確認に使用されます</p>
-          <p>※ 一度登録すると変更できませんのでご注意ください</p>
+          <p>※ テストモードではNFT確認を行いません</p>
         </div>
       </Card>
     </motion.div>

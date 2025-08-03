@@ -7,7 +7,11 @@ import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { toast } from 'react-hot-toast';
 
-export function EmailAuth() {
+interface EmailAuthProps {
+  onSuccess?: () => void;
+}
+
+export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
   const { user, isLoading, signOut, signInWithEmail, signUpWithEmail, error } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -37,9 +41,11 @@ export function EmailAuth() {
       if (authMode === 'signin') {
         await signInWithEmail(email, password);
         toast.success('ログインしました');
+        if (onSuccess) onSuccess();
       } else if (authMode === 'signup') {
         await signUpWithEmail(email, password);
         toast.success('アカウントを作成しました');
+        if (onSuccess) onSuccess();
       }
     } catch (err) {
       // Error handling is done in the store

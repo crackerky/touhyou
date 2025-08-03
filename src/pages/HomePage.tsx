@@ -38,7 +38,7 @@ export function HomePage() {
               Cardano NFTとGoogle認証を組み合わせた、透明性と信頼性の高い投票プラットフォーム
             </p>
             
-            {user ? (
+{user ? (
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button
                   onClick={() => navigate('/dashboard')}
@@ -47,10 +47,20 @@ export function HomePage() {
                   ダッシュボードへ
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
+                {activeSessions.length > 0 && (
+                  <Button
+                    onClick={() => navigate(`/vote/${activeSessions[0].id}`)}
+                    variant="outline"
+                    className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                  >
+                    投票に参加する
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                )}
               </div>
             ) : (
               <p className="text-gray-600">
-                投票に参加するには、上部のメールアドレスでログインしてください
+                投票に参加するには、右上のログインボタンをクリックしてください
               </p>
             )}
           </motion.div>
@@ -127,9 +137,22 @@ export function HomePage() {
 
       {/* Active Sessions */}
       {activeSessions.length > 0 && (
-        <section className="py-16 px-4">
+        <section className="py-16 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-12">現在開催中の投票</h2>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                現在開催中の投票
+              </h2>
+              {user ? (
+                <p className="text-gray-600">
+                  以下の投票セッションに参加できます
+                </p>
+              ) : (
+                <p className="text-gray-600">
+                  ログインすると投票に参加できます
+                </p>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {activeSessions.slice(0, 6).map((session) => (
                 <motion.div
@@ -139,8 +162,10 @@ export function HomePage() {
                   whileHover={{ scale: 1.02 }}
                 >
                   <Card 
-                    className="p-6 h-full cursor-pointer hover:shadow-lg transition-shadow"
-                    onClick={() => navigate(`/vote/${session.id}`)}
+                    className={`p-6 h-full cursor-pointer hover:shadow-lg transition-all ${
+                      user ? 'border-blue-200 hover:border-blue-300' : 'opacity-75'
+                    }`}
+                    onClick={() => user && navigate(`/vote/${session.id}`)}
                   >
                     <h3 className="text-lg font-semibold mb-2">{session.title}</h3>
                     {session.description && (
@@ -150,9 +175,14 @@ export function HomePage() {
                     )}
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-500">
-                        参加者: {session.total_voters || 0}
+                        {user ? '参加可能' : 'ログインが必要'}
                       </span>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant={user ? "default" : "outline"} 
+                        size="sm"
+                        className={user ? "bg-blue-600 hover:bg-blue-700" : ""}
+                        disabled={!user}
+                      >
                         投票する
                         <ArrowRight className="ml-1 h-4 w-4" />
                       </Button>

@@ -72,7 +72,7 @@ export function Dashboard() {
               <div>
                 <p className="text-sm font-medium text-gray-600">総投票数</p>
                 <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {sessions.reduce((acc, s) => acc + (s.total_voters || 0), 0)}
+                  {sessions.length}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 rounded-lg">
@@ -148,7 +148,7 @@ export function Dashboard() {
                             )}
                             <div className="flex items-center gap-1">
                               <Users className="h-4 w-4" />
-                              {session.total_voters || 0} 投票
+                              参加可能
                             </div>
                           </div>
 

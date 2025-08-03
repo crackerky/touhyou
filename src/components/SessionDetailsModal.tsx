@@ -31,25 +31,40 @@ export function SessionDetailsModal({ sessionId, onClose }: SessionDetailsModalP
 
   useEffect(() => {
     fetchSessionById(sessionId);
-    fetchStatistics();
   }, [sessionId]);
+
+  useEffect(() => {
+    if (currentSession) {
+      fetchStatistics();
+    }
+  }, [currentSession]);
 
   const fetchStatistics = async () => {
     try {
-      const { data, error } = await supabase
-        .from('vote_statistics')
-        .select('*')
-        .eq('session_id', sessionId)
-        .single();
+      // Get votes for this session
+      const { data: votes, error } = await supabase
+        .from('session_votes')
+        .select('option, nft_verified')
+        .eq('session_id', sessionId);
 
       if (error) throw error;
 
-      if (data?.results) {
-        const totalVotes = data.total_voters || 0;
-        const stats = data.results.map((result: any) => ({
-          ...result,
-          percentage: totalVotes > 0 ? (result.count / totalVotes) * 100 : 0
-        }));
+      if (currentSession?.options) {
+        const options = Array.isArray(currentSession.options) ? currentSession.options : [];
+        const totalVotes = votes?.length || 0;
+        
+        const stats = options.map((option: any) => {
+          const optionVotes = votes?.filter(v => v.option === option.label) || [];
+          const verifiedVotes = optionVotes.filter(v => v.nft_verified);
+          
+          return {
+            option: option.label,
+            count: optionVotes.length,
+            verified_count: verifiedVotes.length,
+            percentage: totalVotes > 0 ? (optionVotes.length / totalVotes) * 100 : 0
+          };
+        });
+        
         setStatistics(stats);
       }
     } catch (error) {
