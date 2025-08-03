@@ -115,7 +115,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               メールアドレス
             </label>
-            <Input
+            <input
               type="email"
               value={email}
               onChange={(e) => {
@@ -130,6 +130,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
               disabled={isLoading}
               autoFocus
               tabIndex={1}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -139,7 +140,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                 パスワード
               </label>
               <div className="relative">
-                <Input
+                <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => {
@@ -153,6 +154,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                   required
                   disabled={isLoading}
                   tabIndex={2}
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
                 <button
                   type="button"

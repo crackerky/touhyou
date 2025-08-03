@@ -15,6 +15,8 @@ interface AuthState {
   checkUser: () => Promise<void>;
   updateUserWallet: (walletAddress: string) => Promise<void>;
   clearError: () => void;
+  logAuthAttempt: (email: string, type: string, success: boolean, error?: string) => Promise<void>;
+  createSession: (user: any) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -32,10 +34,22 @@ export const useAuthStore = create<AuthState>()(
             password,
           });
 
-          if (error) throw error;
+          if (error) {
+            await get().logAuthAttempt(email, 'login', false, error.message);
+            throw error;
+          }
 
+          // Log successful attempt
+          await get().logAuthAttempt(email, 'login', true);
+          
           // User will be handled by the auth state change listener
           await get().checkUser();
+          
+          // Create session tracking
+          if (data.user) {
+            await get().createSession(data.user);
+          }
+          
           set({ isLoading: false });
         } catch (error) {
           console.error('Email sign in error:', error);
@@ -54,7 +68,13 @@ export const useAuthStore = create<AuthState>()(
             password,
           });
 
-          if (error) throw error;
+          if (error) {
+            await get().logAuthAttempt(email, 'signup', false, error.message);
+            throw error;
+          }
+
+          // Log successful attempt
+          await get().logAuthAttempt(email, 'signup', true);
 
           if (data.user && !data.user.email_confirmed_at) {
             set({ 
@@ -67,6 +87,12 @@ export const useAuthStore = create<AuthState>()(
 
           // User will be handled by the auth state change listener
           await get().checkUser();
+          
+          // Create session tracking
+          if (data.user) {
+            await get().createSession(data.user);
+          }
+          
           set({ isLoading: false });
         } catch (error) {
           console.error('Email sign up error:', error);
@@ -168,7 +194,41 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      clearError: () => set({ error: null })
+      clearError: () => set({ error: null }),
+
+      logAuthAttempt: async (email: string, type: string, success: boolean, error?: string) => {
+        try {
+          await supabase.rpc('log_auth_attempt', {
+            p_email: email,
+            p_attempt_type: type,
+            p_success: success,
+            p_error_message: error || null,
+            p_ip_address: null, // Could be obtained from a service
+            p_user_agent: navigator.userAgent
+          });
+        } catch (err) {
+          console.error('Failed to log auth attempt:', err);
+        }
+      },
+
+      createSession: async (user: any) => {
+        try {
+          const { data: session } = await supabase.auth.getSession();
+          if (session?.session) {
+            await supabase.rpc('create_auth_session', {
+              p_user_id: user.id,
+              p_email: user.email,
+              p_session_token: session.session.access_token,
+              p_login_method: 'email',
+              p_ip_address: null,
+              p_user_agent: navigator.userAgent,
+              p_expires_hours: 24
+            });
+          }
+        } catch (err) {
+          console.error('Failed to create session:', err);
+        }
+      }
     }),
     {
       name: 'auth-storage',
