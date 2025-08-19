@@ -59,9 +59,16 @@ export function HomePage() {
                 )}
               </div>
             ) : (
-              <p className="text-gray-600">
-                投票に参加するには、右上のログインボタンをクリックしてください
-              </p>
+              <div className="space-y-4">
+                <p className="text-gray-600">
+                  投票に参加するには、まずログインしてください
+                </p>
+                {activeSessions.length > 0 && (
+                  <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
+                    現在 {activeSessions.length} 件の投票セッションが開催中です
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
         </div>

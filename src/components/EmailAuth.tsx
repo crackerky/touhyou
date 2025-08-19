@@ -18,8 +18,8 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
   const [showPassword, setShowPassword] = useState(false);
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | 'reset'>('signin');
 
-  // デバッグ用ログ
-  console.log('EmailAuth render:', { email, password, isLoading, error, authMode });
+  // デバッグ用ログ（必要に応じて有効化）
+  // console.log('EmailAuth render:', { email, password, isLoading, error, authMode });
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +96,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
-      <Card className="p-6 relative z-10">
+      <Card className="p-6 relative z-20 bg-white">
         <div className="text-center mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {authMode === 'signin' && 'ログイン'}
@@ -115,22 +115,15 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               メールアドレス
             </label>
-            <input
+            <Input
               type="email"
               value={email}
-              onChange={(e) => {
-                console.log('Email input change:', e.target.value);
-                setEmail(e.target.value);
-              }}
-              onFocus={() => console.log('Email input focused')}
-              onBlur={() => console.log('Email input blurred')}
-              onClick={() => console.log('Email input clicked')}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="example@email.com"
               required
               disabled={isLoading}
               autoFocus
               tabIndex={1}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
 
@@ -140,26 +133,20 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                 パスワード
               </label>
               <div className="relative">
-                <input
+                <Input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => {
-                    console.log('Password input change:', e.target.value);
-                    setPassword(e.target.value);
-                  }}
-                  onFocus={() => console.log('Password input focused')}
-                  onBlur={() => console.log('Password input blurred')}
-                  onClick={() => console.log('Password input clicked')}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="パスワードを入力"
                   required
                   disabled={isLoading}
                   tabIndex={2}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />

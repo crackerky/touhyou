@@ -1,13 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, LogIn, LogOut, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { useVotingSessionStore } from '../store/votingSessionStore';
 import { Button } from './ui/Button';
 import { EmailAuth } from './EmailAuth';
 
 export function HeaderAuth() {
+  const navigate = useNavigate();
   const { user, isLoading, signOut } = useAuthStore();
+  const { sessions, fetchSessions } = useVotingSessionStore();
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    // セッション情報を取得
+    fetchSessions();
+  }, [fetchSessions]);
+
+  const handleLoginSuccess = async () => {
+    setShowLoginModal(false);
+    
+    // セッション情報を最新にして遷移先を決定
+    await fetchSessions();
+    
+    // 短時間待ってからセッション情報をチェック
+    setTimeout(() => {
+      const activeSessions = sessions.filter(s => s.is_active);
+      if (activeSessions.length > 0) {
+        navigate(`/vote/${activeSessions[0].id}`);
+      } else {
+        // アクティブなセッションがない場合はダッシュボードに遷移
+        navigate('/dashboard');
+      }
+    }, 500);
+  };
 
   if (user) {
     return (
@@ -71,7 +98,6 @@ export function HeaderAuth() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               className="relative max-w-md w-full my-8"
-              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setShowLoginModal(false)}
@@ -79,7 +105,9 @@ export function HeaderAuth() {
               >
                 ✕
               </button>
-              <EmailAuth onSuccess={() => setShowLoginModal(false)} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <EmailAuth onSuccess={handleLoginSuccess} />
+              </div>
             </motion.div>
           </div>
         </div>
