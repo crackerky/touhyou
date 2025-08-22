@@ -7,7 +7,11 @@
     <title>🍎 好きな果物投票 - Cardanoウォレット認証</title>
     <meta name="description" content="バナナ・リンゴ・オレンジから好きな果物を投票！Cardanoウォレット認証で安全な投票システム" />
     <meta name="keywords" content="果物,投票,Cardano,ウォレット,ブロックチェーン,バナナ,リンゴ,オレンジ" />
-    <script type="module">
+    <script>
+      // Polyfill for exports to prevent "exports is not defined" error
+      if (typeof exports === 'undefined') {
+        window.exports = {};
+      }
       // Early initialization to avoid top-level await issues during build
       window.wasmImportsInitialized = false;
       window.initWasmImports = function() {
