@@ -74,9 +74,19 @@ export function HeaderAuth() {
       {/* Login Modal */}
       {showLoginModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowLoginModal(false)}></div>
-          <div className="flex items-center justify-center min-h-screen p-4 relative z-50">
-            <div className="relative max-w-md w-full my-8">
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50" 
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowLoginModal(false);
+            }}
+          />
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div 
+              className="relative max-w-md w-full my-8 z-50"
+              onClick={(e) => e.stopPropagation()}
+              style={{ pointerEvents: 'auto' }}
+            >
               <button
                 onClick={() => setShowLoginModal(false)}
                 className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-gray-100"
