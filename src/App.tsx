@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Home, LayoutDashboard, LogIn } from 'lucide-react';
@@ -10,9 +10,22 @@ import { ModernVotePage } from './components/ModernVotePage';
 import { HomePage } from './pages/HomePage';
 import { AuthCallback } from './pages/AuthCallback';
 import { supabase } from './lib/supabase';
+import { TestInput } from './TestInput';
 
 function App() {
   const { checkUser, user } = useAuthStore();
+  const [showTest, setShowTest] = useState(false);
+  
+  // テスト用: Tキーを押すとテスト画面を表示
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'T' && e.shiftKey) {
+        setShowTest(!showTest);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showTest]);
 
   useEffect(() => {
     checkUser();
@@ -35,6 +48,7 @@ function App() {
   return (
     <Router>
         <div className="min-h-screen bg-gradient-to-b from-orange-50 via-yellow-50 to-red-50">
+          {showTest && <TestInput />}
           <Toaster position="top-center" />
           
           {/* Navigation Header */}

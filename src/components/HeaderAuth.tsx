@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useVotingSessionStore } from '../store/votingSessionStore';
 import { Button } from './ui/Button';
-import { EmailAuth } from './EmailAuth';
+import { LoginModal } from './LoginModal';
 
 export function HeaderAuth() {
   const navigate = useNavigate();
@@ -71,33 +71,12 @@ export function HeaderAuth() {
         ログイン
       </Button>
 
-      {/* Login Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-50" 
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowLoginModal(false);
-            }}
-          />
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <div 
-              className="relative max-w-md w-full my-8 z-50"
-              onClick={(e) => e.stopPropagation()}
-              style={{ pointerEvents: 'auto' }}
-            >
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-gray-100"
-              >
-                ✕
-              </button>
-              <EmailAuth onSuccess={handleLoginSuccess} />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Login Modal - ポータルを使用 */}
+      <LoginModal 
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={handleLoginSuccess}
+      />
     </>
   );
 }

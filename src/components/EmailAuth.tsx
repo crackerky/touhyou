@@ -123,8 +123,14 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
               required
               disabled={isLoading}
               autoFocus
-              tabIndex={1}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              style={{ 
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '6px',
+                backgroundColor: 'white',
+                fontSize: '14px'
+              }}
             />
           </div>
 
@@ -141,8 +147,14 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                   placeholder="パスワードを入力"
                   required
                   disabled={isLoading}
-                  tabIndex={2}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                  style={{ 
+                    width: '100%',
+                    padding: '8px 36px 8px 12px',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    backgroundColor: 'white',
+                    fontSize: '14px'
+                  }}
                 />
                 <button
                   type="button"
