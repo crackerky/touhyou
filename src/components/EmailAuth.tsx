@@ -96,7 +96,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
       animate={{ opacity: 1, y: 0 }}
       className="w-full max-w-md"
     >
-      <Card className="p-6 relative z-20 bg-white">
+      <Card className="p-6 bg-white shadow-lg">
         <div className="text-center mb-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             {authMode === 'signin' && 'ログイン'}
@@ -110,12 +110,12 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
           </p>
         </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
+        <form onSubmit={handleAuth} className="space-y-4" autoComplete="off">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               メールアドレス
             </label>
-            <Input
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -124,6 +124,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
               disabled={isLoading}
               autoFocus
               tabIndex={1}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             />
           </div>
 
@@ -133,7 +134,7 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                 パスワード
               </label>
               <div className="relative">
-                <Input
+                <input
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -141,12 +142,12 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                   required
                   disabled={isLoading}
                   tabIndex={2}
-                  className="pr-10"
+                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 z-10"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />

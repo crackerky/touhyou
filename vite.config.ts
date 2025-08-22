@@ -4,99 +4,86 @@ import wasm from 'vite-plugin-wasm';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  base: './',
   plugins: [
     react(),
     wasm(),
     nodePolyfills({
-      include: [
-        'buffer', 
-        'stream', 
-        'process',
-        'events',
-        'crypto'
-      ],
+      include: ['buffer', 'stream', 'process', 'util', 'crypto', 'fs', 'path'],
       globals: {
         Buffer: true,
         global: true,
         process: true
-      },
-      protocolImports: true
+      }
     }),
-  ],
-  resolve: {
-    alias: {
-      'node-fetch': 'isomorphic-fetch'
+    // Custom plugin to fix lodash imports
+    {
+      name: 'fix-lodash-imports',
+      load(id) {
+        if (id.includes('@cardano-sdk/util/dist/esm/equals.js')) {
+          console.log('🔧 Intercepting equals.js to fix lodash import');
+          return `import isEqual from "lodash/isEqual";
+export const deepEquals = (a, b) => isEqual(a, b);
+export const strictEquals = (a, b) => a === b;
+export const sameArrayItems = (arrayA, arrayB, itemEquals) => arrayA.length === arrayB.length && arrayA.every((a) => arrayB.some((b) => itemEquals(a, b)));
+export const areNumbersEqualInConstantTime = (a, b) => (a ^ b) === 0;
+export const areStringsEqualInConstantTime = (a, b) => {
+    const maxLength = Math.max(a.length, b.length);
+    const results = Array.from({ length: maxLength }, (_, i) => (a.charCodeAt(i) === b.charCodeAt(i) ? 1 : 0));
+    const areAllCharactersEqual = results.reduce((accumulator, currentValue) => (accumulator & currentValue), 1);
+    return areAllCharactersEqual === 1;
+};`;
+        }
+      }
     }
-  },
-  define: { 
-    global: 'window',
-    'process.env': process.env
-  },
+  ],
   server: {
-    hmr: { overlay: false }
-  },
-  optimizeDeps: {
-    exclude: [
-      'lucide-react',
-      'react-dom',
-      '@emurgo/cardano-serialization-lib-browser',
-      '@meshsdk/core',
-      '@meshsdk/react'
-    ],
-    esbuildOptions: {
-      target: 'es2022',
-      define: {
-        global: 'globalThis'
-      },
-      supported: {
-        bigint: true
-      },
-      platform: 'browser'
+    port: 5173,
+    hmr: {
+      overlay: true
     }
   },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    sourcemap: false, // Disable sourcemaps to reduce memory usage
-    minify: 'esbuild', // Use esbuild for minification (faster and less memory intensive)
-    target: 'es2022',
-    reportCompressedSize: false, // Disable gzip size reporting to save memory
-    chunkSizeWarningLimit: 2000, // Increase chunk size warning limit
-    commonjsOptions: {
-      include: [/node_modules/],
-      transformMixedEsModules: true
-    },
+    target: 'esnext',
     rollupOptions: {
-      // Reduce memory use by external dependencies
-      external: [
-        // External dependencies that are causing issues
-      ],
-      // Reduce memory usage by limiting chunk size and manual chunking
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-framer': ['framer-motion'],
-          'vendor-mesh': [
-            '@meshsdk/core',
-            '@meshsdk/react'
-          ],
-          'vendor-cardano': [
-            '@emurgo/cardano-serialization-lib-browser'
-          ],
-          'vendor-ui': [
-            'lucide-react',
-            'react-hot-toast',
-            'class-variance-authority',
-            'clsx',
-            'tailwind-merge'
-          ]
-        },
-        // Avoid too large chunks by limiting size
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
+        format: 'es'
+      },
+      external: [],
+      plugins: []
+    },
+    commonjsOptions: {
+      include: [/lodash/, /node_modules/],
+      transformMixedEsModules: true,
+      defaultIsModuleExports: 'auto'
     }
+  },
+  resolve: {
+    alias: {
+      // Node.jsモジュールのブラウザ互換エイリアス
+      util: 'util',
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
+      buffer: 'buffer'
+    }
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-dom/client',
+      'buffer',
+      'process',
+      'util',
+      'lodash/isEqual'
+    ],
+    exclude: [
+      '@meshsdk/core',
+      '@meshsdk/react'
+    ]
+  },
+  define: { 
+    global: 'globalThis',
+    'process.env': process.env,
+    'process.browser': true
   }
 });

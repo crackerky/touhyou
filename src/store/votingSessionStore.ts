@@ -148,27 +148,46 @@ export const useVotingSessionStore = create<VotingSessionState>((set, get) => ({
   voteInSession: async (sessionId, userId, option, nftVerified, nftCount) => {
     set({ isLoading: true, error: null });
     try {
+      // Get user's wallet address from auth store instead of users table
+      const authStore = (await import('../store/authStore')).useAuthStore;
+      const currentUser = authStore.getState().user;
+      
+      if (!currentUser?.wallet_address) {
+        throw new Error('ウォレットアドレスが登録されていません');
+      }
+
+      // Insert into existing votes table
       const { data, error } = await supabase
-        .from('session_votes')
+        .from('votes')
         .insert({
-          session_id: sessionId,
-          user_id: userId,
+          wallet_address: currentUser.wallet_address,
           option,
           nft_verified: nftVerified,
-          nft_count: nftCount
+          policy_id: nftVerified ? 'fruit_vote_policy' : null,
+          verification_method: nftVerified ? 'mesh_verification' : 'email_only'
         })
         .select()
         .single();
 
       if (error) throw error;
       
-      // Update local votes cache
+      // Update local votes cache with converted format
       const sessionVotes = get().sessionVotes;
       const votes = sessionVotes[sessionId] || [];
+      const convertedVote = {
+        id: data.id.toString(),
+        session_id: sessionId,
+        user_id: userId,
+        option: data.option,
+        nft_verified: data.nft_verified || false,
+        nft_count: nftCount,
+        created_at: data.created_at
+      };
+      
       set({ 
         sessionVotes: {
           ...sessionVotes,
-          [sessionId]: [...votes, data]
+          [sessionId]: [...votes, convertedVote]
         },
         isLoading: false 
       });
@@ -184,18 +203,29 @@ export const useVotingSessionStore = create<VotingSessionState>((set, get) => ({
   fetchSessionVotes: async (sessionId) => {
     set({ isLoading: true, error: null });
     try {
+      // Fetch from existing votes table
       const { data, error } = await supabase
-        .from('session_votes')
-        .select('*')
-        .eq('session_id', sessionId);
+        .from('votes')
+        .select('*');
 
       if (error) throw error;
+      
+      // Convert votes data to session format
+      const convertedVotes = (data || []).map(vote => ({
+        id: vote.id.toString(),
+        session_id: sessionId, // All votes belong to fruit voting for now
+        user_id: 'unknown', // We don't have user mapping in votes table
+        option: vote.option,
+        nft_verified: vote.nft_verified || false,
+        nft_count: 1,
+        created_at: vote.created_at
+      }));
       
       const sessionVotes = get().sessionVotes;
       set({ 
         sessionVotes: {
           ...sessionVotes,
-          [sessionId]: data || []
+          [sessionId]: convertedVotes
         },
         isLoading: false 
       });

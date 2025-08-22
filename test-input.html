@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Input Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input {
+            width: 300px;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>入力フィールドテスト</h1>
+    
+    <form>
+        <div>
+            <label>メールアドレス:</label>
+            <input type="email" placeholder="test@example.com" />
+        </div>
+        
+        <div>
+            <label>パスワード:</label>
+            <input type="password" placeholder="パスワード" />
+        </div>
+        
+        <button type="button">テストボタン</button>
+    </form>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded');
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('focus', () => console.log(`Input ${index + 1} focused`));
+                input.addEventListener('input', (e) => console.log(`Input ${index + 1}:`, e.target.value));
+            });
+        });
+    </script>
+</body>
+</html>

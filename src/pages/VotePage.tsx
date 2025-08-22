@@ -80,6 +80,8 @@ export function VotePage() {
 
     setIsVoting(true);
     try {
+      console.log('投票開始:', { sessionId, userId: user.id, option: selectedOption });
+      
       await voteInSession(
         sessionId!,
         user.id,
@@ -88,14 +90,17 @@ export function VotePage() {
         nftData?.nftCount || 0
       );
       
+      console.log('投票完了');
       setHasVoted(true);
       toast.success('投票が完了しました');
       
       // Refresh votes
-      fetchSessionVotes(sessionId!);
+      await fetchSessionVotes(sessionId!);
     } catch (error) {
       console.error('Vote error:', error);
+      toast.error(`投票に失敗しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
     } finally {
+      console.log('投票処理終了 - isVotingをfalseに設定');
       setIsVoting(false);
     }
   };

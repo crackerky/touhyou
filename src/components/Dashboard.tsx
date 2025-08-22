@@ -32,13 +32,27 @@ export function Dashboard() {
             <h1 className="text-3xl font-bold text-gray-900">投票ダッシュボード</h1>
             <p className="mt-2 text-gray-600">投票セッションの管理と結果の確認</p>
           </div>
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <Plus className="h-5 w-5 mr-2" />
-            新規投票作成
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-5 w-5 mr-2" />
+              新規投票作成
+            </Button>
+            <Button
+              onClick={async () => {
+                const { createTestVotingSession, listAllTables } = await import('../utils/testData');
+                await listAllTables();
+                await createTestVotingSession();
+                fetchSessions();
+              }}
+              variant="outline"
+              className="bg-green-600 text-white hover:bg-green-700"
+            >
+              テストデータ作成
+            </Button>
+          </div>
         </div>
 
         {/* Stats */}

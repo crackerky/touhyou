@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, LogIn, LogOut, User } from 'lucide-react';
+import { LogIn, LogOut, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useVotingSessionStore } from '../store/votingSessionStore';
@@ -20,20 +20,10 @@ export function HeaderAuth() {
 
   const handleLoginSuccess = async () => {
     setShowLoginModal(false);
+    console.log('Login success - 果物投票ページに遷移します...');
     
-    // セッション情報を最新にして遷移先を決定
-    await fetchSessions();
-    
-    // 短時間待ってからセッション情報をチェック
-    setTimeout(() => {
-      const activeSessions = sessions.filter(s => s.is_active);
-      if (activeSessions.length > 0) {
-        navigate(`/vote/${activeSessions[0].id}`);
-      } else {
-        // アクティブなセッションがない場合はダッシュボードに遷移
-        navigate('/dashboard');
-      }
-    }, 500);
+    // 果物投票セッションに直接遷移
+    navigate('/vote/11111111-1111-1111-1111-111111111111');
   };
 
   if (user) {
@@ -83,32 +73,18 @@ export function HeaderAuth() {
 
       {/* Login Modal */}
       {showLoginModal && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto"
-          onClick={(e) => {
-            // モーダル背景をクリックしたときのみ閉じる
-            if (e.target === e.currentTarget) {
-              setShowLoginModal(false);
-            }
-          }}
-        >
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative max-w-md w-full my-8"
-            >
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50" onClick={() => setShowLoginModal(false)}></div>
+          <div className="flex items-center justify-center min-h-screen p-4 relative z-50">
+            <div className="relative max-w-md w-full my-8">
               <button
                 onClick={() => setShowLoginModal(false)}
-                className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center z-10 hover:bg-gray-100"
+                className="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center z-50 hover:bg-gray-100"
               >
                 ✕
               </button>
-              <div onClick={(e) => e.stopPropagation()}>
-                <EmailAuth onSuccess={handleLoginSuccess} />
-              </div>
-            </motion.div>
+              <EmailAuth onSuccess={handleLoginSuccess} />
+            </div>
           </div>
         </div>
       )}
