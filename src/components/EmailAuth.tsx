@@ -159,7 +159,20 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#9ca3af',
+                    padding: '4px',
+                    zIndex: 10
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#4b5563'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#9ca3af'}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -194,16 +207,46 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
             <>
               <button
                 type="button"
-                onClick={() => setAuthMode('signup')}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                onClick={() => {
+                  console.log('Switching to signup mode');
+                  setAuthMode('signup');
+                }}
+                style={{
+                  fontSize: '14px',
+                  color: '#2563eb',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '4px 8px',
+                  position: 'relative',
+                  zIndex: 10
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#1d4ed8'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#2563eb'}
               >
                 アカウントをお持ちでない方はこちら
               </button>
               <br />
               <button
                 type="button"
-                onClick={() => setAuthMode('reset')}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  console.log('Switching to reset mode');
+                  setAuthMode('reset');
+                }}
+                style={{
+                  fontSize: '14px',
+                  color: '#6b7280',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '4px 8px',
+                  position: 'relative',
+                  zIndex: 10
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#374151'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#6b7280'}
               >
                 パスワードを忘れた方はこちら
               </button>
@@ -213,8 +256,23 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
           {authMode === 'signup' && (
             <button
               type="button"
-              onClick={() => setAuthMode('signin')}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              onClick={() => {
+                console.log('Switching to signin mode');
+                setAuthMode('signin');
+              }}
+              style={{
+                fontSize: '14px',
+                color: '#2563eb',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 8px',
+                position: 'relative',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1d4ed8'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#2563eb'}
             >
               既にアカウントをお持ちの方はこちら
             </button>
@@ -223,8 +281,23 @@ export function EmailAuth({ onSuccess }: EmailAuthProps = {}) {
           {authMode === 'reset' && (
             <button
               type="button"
-              onClick={() => setAuthMode('signin')}
-              className="text-sm text-blue-600 hover:text-blue-800"
+              onClick={() => {
+                console.log('Switching to signin mode');
+                setAuthMode('signin');
+              }}
+              style={{
+                fontSize: '14px',
+                color: '#2563eb',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                padding: '4px 8px',
+                position: 'relative',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1d4ed8'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#2563eb'}
             >
               ログインに戻る
             </button>
