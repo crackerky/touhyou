@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useVotingSessionStore } from '../store/votingSessionStore';
 import { Button } from './ui/Button';
-import { LoginModal } from './LoginModal';
+import { SimpleLoginModal } from './SimpleLoginModal';
 
 export function HeaderAuth() {
   const navigate = useNavigate();
@@ -71,8 +71,8 @@ export function HeaderAuth() {
         ログイン
       </Button>
 
-      {/* Login Modal - ポータルを使用 */}
-      <LoginModal 
+      {/* Login Modal - シンプルな実装 */}
+      <SimpleLoginModal 
         isOpen={showLoginModal}
         onClose={() => setShowLoginModal(false)}
         onSuccess={handleLoginSuccess}
