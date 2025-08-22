@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@emurgo/cardano-serialization-lib-browser": "^11.5.0",
-    "@meshsdk/core": "^1.5.10",
-    "@meshsdk/react": "^1.1.8",
     "@supabase/supabase-js": "^2.39.8",
     "@types/react-router-dom": "^5.3.3",
     "buffer": "^6.0.3",

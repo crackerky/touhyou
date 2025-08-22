@@ -5,32 +5,35 @@ import { useAuthStore } from '../store/authStore';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
-import { useWallet } from '@meshsdk/react';
+// import { useWallet } from '@meshsdk/react';
 import { toast } from 'react-hot-toast';
 
 export function WalletRegistration() {
   const { user, updateUserWallet, isLoading } = useAuthStore();
-  const { connected, wallet } = useWallet();
+  // const { connected, wallet } = useWallet();
+  const connected = false;
+  const wallet = null;
   const [walletAddress, setWalletAddress] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
 
   const connectAndRegisterWallet = async () => {
-    if (!connected || !wallet) {
-      toast.error('ウォレットが接続されていません');
-      return;
-    }
+    // if (!connected || !wallet) {
+    //   toast.error('ウォレットが接続されていません');
+    //   return;
+    // }
 
     setIsConnecting(true);
     try {
-      const addresses = await wallet.getUsedAddresses();
-      if (addresses.length > 0) {
-        const address = addresses[0];
-        setWalletAddress(address);
-        await updateUserWallet(address);
-        toast.success('ウォレットアドレスが登録されました');
-      } else {
-        toast.error('ウォレットアドレスが見つかりません');
-      }
+      // const addresses = await wallet.getUsedAddresses();
+      // if (addresses.length > 0) {
+      //   const address = addresses[0];
+      //   setWalletAddress(address);
+      //   await updateUserWallet(address);
+      //   toast.success('ウォレットアドレスが登録されました');
+      toast.error('ウォレット機能は一時的に無効化されています');
+      // } else {
+      //   toast.error('ウォレットアドレスが見つかりません');
+      // }
     } catch (error) {
       console.error('Wallet connection error:', error);
       toast.error('ウォレット接続エラーが発生しました');

@@ -15,9 +15,9 @@ export default defineConfig({
         process: true
       }
     }),
-    // Custom plugin to fix lodash imports
+    // Custom plugin to fix imports
     {
-      name: 'fix-lodash-imports',
+      name: 'fix-imports',
       load(id) {
         if (id.includes('@cardano-sdk/util/dist/esm/equals.js')) {
           console.log('🔧 Intercepting equals.js to fix lodash import');
@@ -33,6 +33,29 @@ export const areStringsEqualInConstantTime = (a, b) => {
     return areAllCharactersEqual === 1;
 };`;
         }
+        if (id.includes('@cardano-sdk/util/dist/esm/primitives.js')) {
+          console.log('🔧 Intercepting primitives.js to fix bech32 import');
+          return `import * as bech32Module from 'bech32';
+import { InvalidStringError } from './errors.js';
+const bech32 = bech32Module.bech32 || bech32Module;
+const MAX_BECH32_LENGTH_LIMIT = 1023;
+export const typedBech32 = (humanReadablePart, length) => ({
+    decode(value) {
+        if (value.substring(0, humanReadablePart.length) !== humanReadablePart) {
+            throw new InvalidStringError(\`expected bech32 string to start with '\${humanReadablePart}', but got '\${value}'\`);
+        }
+        const { words } = bech32.decode(value, MAX_BECH32_LENGTH_LIMIT);
+        const data = Uint8Array.from(bech32.fromWords(words));
+        if (length !== undefined && data.length !== length) {
+            throw new InvalidStringError(\`expected bech32 string '\${value}' to decode to \${length} bytes, but got \${data.length}\`);
+        }
+        return data;
+    },
+    encode(value) {
+        return bech32.encode(humanReadablePart, bech32.toWords(value), MAX_BECH32_LENGTH_LIMIT);
+    }
+});`;
+        }
       }
     }
   ],
@@ -46,7 +69,8 @@ export const areStringsEqualInConstantTime = (a, b) => {
     target: 'esnext',
     rollupOptions: {
       output: {
-        format: 'es'
+        format: 'es',
+        inlineDynamicImports: true
       },
       external: [],
       plugins: []
@@ -54,7 +78,8 @@ export const areStringsEqualInConstantTime = (a, b) => {
     commonjsOptions: {
       include: [/lodash/, /node_modules/],
       transformMixedEsModules: true,
-      defaultIsModuleExports: 'auto'
+      defaultIsModuleExports: 'auto',
+      requireReturnsDefault: 'auto'
     }
   },
   resolve: {
@@ -74,16 +99,23 @@ export const areStringsEqualInConstantTime = (a, b) => {
       'buffer',
       'process',
       'util',
-      'lodash/isEqual'
+      'lodash/isEqual',
+      'bech32'
     ],
     exclude: [
       '@meshsdk/core',
       '@meshsdk/react'
-    ]
+    ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
+    }
   },
   define: { 
     global: 'globalThis',
-    'process.env': process.env,
-    'process.browser': true
+    'process.env': {},
+    'process.browser': true,
+    'exports': '{}'
   }
 });

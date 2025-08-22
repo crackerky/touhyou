@@ -6,8 +6,8 @@ import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import { toast } from 'react-hot-toast';
 import { testSupabaseCompatibility, validateVoteData, validateSupabaseConfig } from '../utils/supabaseCompatibility';
-import { WalletConnector } from './WalletConnector';
-import { useCardanoWallet } from '../hooks/useCardanoWallet';
+// import { WalletConnector } from './WalletConnector';
+// import { useCardanoWallet } from '../hooks/useCardanoWallet';
 
 interface VoteOption {
   id: string;
@@ -35,9 +35,11 @@ export function ModernVotePage() {
   const [isInitialized, setIsInitialized] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
-  // ウォレット接続フック
-  const { isConnected, address, checkNFTOwnership } = useCardanoWallet();
-
+  // ウォレット接続フック（一時的に無効化）
+  // const { isConnected, address, checkNFTOwnership } = useCardanoWallet();
+  const isConnected = false;
+  const address = null;
+  
   // 必要なNFTのポリシーID（実際の値に置き換えてください）
   const REQUIRED_NFT_POLICY_ID = 'your_nft_policy_id_here';
 
@@ -175,20 +177,20 @@ export function ModernVotePage() {
       return;
     }
 
-    // ウォレット接続確認
-    if (!isConnected || !address) {
-      toast.error('ウォレットを接続してください');
-      return;
-    }
+    // ウォレット接続確認（一時的に無効化）
+    // if (!isConnected || !address) {
+    //   toast.error('ウォレットを接続してください');
+    //   return;
+    // }
 
-    // NFT保有確認（任意）
-    const nftStatus = checkNFTOwnership(REQUIRED_NFT_POLICY_ID);
-    const hasRequiredNFT = nftStatus.hasNFT;
+    // NFT保有確認（一時的に無効化）
+    // const nftStatus = checkNFTOwnership(REQUIRED_NFT_POLICY_ID);
+    // const hasRequiredNFT = nftStatus.hasNFT;
     
-    if (REQUIRED_NFT_POLICY_ID !== 'your_nft_policy_id_here' && !hasRequiredNFT) {
-      toast.error('投票に必要なNFTを保有していません');
-      return;
-    }
+    // if (REQUIRED_NFT_POLICY_ID !== 'your_nft_policy_id_here' && !hasRequiredNFT) {
+    //   toast.error('投票に必要なNFTを保有していません');
+    //   return;
+    // }
 
     console.log('投票開始:', { wallet: user.wallet_address, option: selectedOption });
     setIsVoting(true);
@@ -208,11 +210,11 @@ export function ModernVotePage() {
       const { data, error } = await supabase
         .from('votes')
         .insert({
-          wallet_address: address, // 接続されたウォレットアドレスを使用
+          wallet_address: user.wallet_address, // ユーザーのウォレットアドレスを使用
           option: selectedOption,
-          nft_verified: hasRequiredNFT,
-          policy_id: hasRequiredNFT ? REQUIRED_NFT_POLICY_ID : null,
-          verification_method: hasRequiredNFT ? 'cardano_wallet_nft' : 'cardano_wallet_only'
+          nft_verified: false, // 一時的に無効化
+          policy_id: null,
+          verification_method: 'email_only'
         })
         .select()
         .single();
@@ -334,8 +336,8 @@ export function ModernVotePage() {
             <p className="text-xl text-gray-600">Cardanoウォレットを接続して投票に参加しましょう</p>
           </motion.div>
 
-          {/* Wallet Connector */}
-          <motion.div
+          {/* Wallet Connector - 一時的に無効化 */}
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -347,7 +349,7 @@ export function ModernVotePage() {
                 toast.success('ウォレットが接続されました！投票できます。');
               }}
             />
-          </motion.div>
+          </motion.div> */}
 
           {/* NFT情報 */}
           {REQUIRED_NFT_POLICY_ID !== 'your_nft_policy_id_here' && (
